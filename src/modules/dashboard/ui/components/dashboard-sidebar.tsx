@@ -55,7 +55,7 @@ const pathname = usePathname();
         </div>
         <SidebarContent>
             <SidebarGroup>
-                <SidebarContent>
+                <SidebarGroupContent>
                     <SidebarMenu>
                         {firstSection.map((item) => (
                             <SidebarMenuItem key={item.href}>
@@ -71,7 +71,7 @@ const pathname = usePathname();
                             </SidebarMenuItem>
                         ))}
                     </SidebarMenu>
-                </SidebarContent>
+                </SidebarGroupContent>
             </SidebarGroup>
             <div className="px-2 py-2">
                 <Separator className="opacity-100 text-[#6D6B68]"/>
