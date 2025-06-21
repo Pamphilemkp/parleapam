@@ -225,8 +225,8 @@ const form = useForm<z.infer<typeof formSchema>>({
             </form>
          </Form>
 
-         <div className="bg-radial from-green-700 to-green-900 relative hidden md:flex flex-col  items-center justify-center gap-y-4">
-           <Image src="/google.svg" alt="Google" width={16} height={16} className="mr-2" />
+         <div className="bg-radial  from-sidebar-accent to-sidebar relative hidden md:flex flex-col  items-center justify-center gap-y-4">
+           <Image src="/logo.svg" alt="Talk To Pams AI" width={120} height={120} />
             <p className="text-2xl text-white font-semibold ">
                 Talk To Pams Ai
             </p>
