@@ -15,7 +15,7 @@ import { useEffect, useState } from "react";
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setCommandOpen(open => !open);
-      }}
+      }};
 
     document.addEventListener('keydown', handleKeyDown);
     return () => {

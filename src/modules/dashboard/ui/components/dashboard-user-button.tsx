@@ -48,7 +48,7 @@ const onLogout = () => {
                     <Avatar>
                         <AvatarImage src={data.user.image} alt={data.user.name || "User"} />
                     </Avatar>
-                    ): <GeneratedAvatar seed={data.user.name} variant="initials" className="sizw-9 mr-3" />}
+                    ): <GeneratedAvatar seed={data.user.name} variant="initials" className="size-9 mr-3" />}
                     <div className="flex flex-col gap-0.5 text-left overflow-hidden flex-1 w-min-0">
                         <p className="text-sm truncate w-full">{data.user.name}</p>
                         <p className="text-xs truncate w-full">{data.user.email}</p>
