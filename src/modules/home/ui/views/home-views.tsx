@@ -1,26 +1,16 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+import  { trpc } from "@/trpc/client";
 
 
 
 export default function HomeViews() {
-const {data: session} = authClient.useSession();
-const router = useRouter();
+ 
+  // Example: fetch hello data using trpc's hello query
+  const { data } = trpc.hello.useQuery({ text: ' Pamphile' });
 
      return (
       <div className="flex flex-col p-4 gap-y-4">
-        <h1 className="text-2xl font-bold">Welcome back! {session?.user?.name ?? "Guest"} </h1>
-        <Button onClick={
-            () => authClient.signOut(
-                {fetchOptions: 
-                    { onSuccess:
-                         ()=> router.push("sign-in")
-                        }})}
-        className="w-full">
-          Sign out
-        </Button>
+        <div>{data ? data.greeting : "Loading..."}</div>
       </div>
     );
 }
