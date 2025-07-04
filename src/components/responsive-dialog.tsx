@@ -19,7 +19,7 @@ export const ResponsiveDialog = ({title, description, children, open, onOpenChan
 
     if(IsMobile){
         return(
-            <Drawer open={!!open}  onOpenChange={onOpenChange}>
+            <Drawer open={open}  onOpenChange={onOpenChange}>
                 <DrawerContent>
                     <DrawerHeader>
                         <DrawerTitle>{title} </DrawerTitle>
