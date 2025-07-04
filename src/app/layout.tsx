@@ -15,6 +15,13 @@ export const metadata: Metadata = {
   description: "Talk  to Pam's AI Agents",
 };
 
+/**
+ * Provides the global layout for the application, including font styles, tRPC context, and a toast notification system.
+ *
+ * Wraps all page content with the Inter font, applies antialiasing, and ensures that toast notifications and tRPC context are available throughout the app.
+ *
+ * @param children - The content to be rendered within the layout
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
