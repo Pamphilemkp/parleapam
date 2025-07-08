@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { TRPCProvider } from "@/trpc/client";
-// Update the import path if the file is located elsewhere, for example:
+import { NuqsAdapter } from "nuqs/adapters/next";
 import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
@@ -16,20 +16,22 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <TRPCProvider>
-      <html lang="en">
-        <body
-          className={`${inter.className} antialiased`}
-        >
-          <Toaster />
-          {children}
-        </body>
-      </html>
-  </TRPCProvider>
-  );
+    children,
+  }: Readonly<{
+    children: React.ReactNode;
+  }>) {
+    return (
+      <NuqsAdapter>
+      <TRPCProvider>
+        <html lang="en">
+          <body
+            className={`${inter.className} antialiased`}
+          >
+            <Toaster />
+            {children}
+          </body>
+        </html>
+    </TRPCProvider>
+    </NuqsAdapter>
+    );
 }
