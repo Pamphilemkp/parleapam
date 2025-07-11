@@ -9,6 +9,47 @@ import { TRPCError } from "@trpc/server";
 
 export const agentsRouter = createTRPCRouter({
 
+    update: protectedProcedure
+        .input(AgentsInsertSchema.extend({id: z.string()}))
+        .mutation(async({input, ctx}) => {
+        const [updatedAgent] = await db
+        .update(agents)
+        .set(input)
+        .where(
+            and(
+                eq(agents.id, input.id),
+                eq(agents.userId, ctx.auth.user.id)
+            )
+        )
+        .returning();
+
+        if (!updatedAgent) {
+            throw new TRPCError({code: "NOT_FOUND", message: "Agent not found"});
+        };
+
+        return updatedAgent;
+    }),
+
+    remove: protectedProcedure
+        .input(z.object({id: z.string()}))
+        .mutation(async({input, ctx}) => {
+        const [removedAgent] = await db
+        .delete(agents) 
+        .where(
+            and(
+                eq(agents.id, input.id),
+                eq(agents.userId, ctx.auth.user.id)
+            )
+        )
+        .returning();
+        if (!removedAgent) {
+            throw new TRPCError({code: "NOT_FOUND", message: "Agent not found"});
+        };
+
+        return removedAgent;
+    }),
+
+
     getOne: protectedProcedure
         .input(z.object({id: z.string()}))
         .query(async({input, ctx}) => {

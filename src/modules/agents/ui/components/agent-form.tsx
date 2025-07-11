@@ -23,22 +23,20 @@ import { toast } from "sonner";
 interface AgentFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
-  initialValues?: Partial<AgentGetOne>; // Allow empty or partial initialValues
+  initialValues?: Partial<AgentGetOne>;
 }
 
 export const AgentForm = ({ onSuccess, onCancel, initialValues = {} }: AgentFormProps) => {
   const queryClient = useQueryClient();
 
-  // Define the response shape to match AgentsView
   interface AgentsGetManyResponse {
     items: AgentGetOne[];
   }
 
   const createAgent = trpc.agents.create.useMutation({
     onSuccess: async (newAgent) => {
-      // Optimistically update the cache to match { items: AgentGetOne[] }
+      // Optimistically update the cache
       queryClient.setQueryData<AgentsGetManyResponse>(["agents.getMany"], (oldData) => {
-        // Ensure meetingCount is present (default to 0 if not provided)
         const agentWithMeetingCount = {
           ...newAgent,
           meetingCount: (newAgent as AgentGetOne).meetingCount ?? 0,
@@ -49,22 +47,49 @@ export const AgentForm = ({ onSuccess, onCancel, initialValues = {} }: AgentForm
         return { items: [...oldData.items, agentWithMeetingCount] };
       });
 
-      // Invalidate queries to ensure consistency with server
-      await queryClient.invalidateQueries({ queryKey: ["agents.getMany"] });
-
-      // Invalidate the specific agent query if editing
-      if (initialValues?.id) {
-        await queryClient.invalidateQueries({
-          queryKey: ["agents.getOne", initialValues.id],
-        });
-      }
+      // Invalidate queries in the background
+      queryClient.invalidateQueries({ queryKey: ["agents.getMany"] });
 
       toast.success("Agent created successfully!");
       onSuccess?.();
     },
     onError: (error: { message: string; code?: string }) => {
       toast.error(error.message);
-      // TODO: Check if error code is forbidden, redirect to /upgrade
+    },
+  });
+
+  const updateAgent = trpc.agents.update.useMutation({
+    onSuccess: async (updatedAgent) => {
+      // Optimistically update the cache
+      queryClient.setQueryData<AgentsGetManyResponse>(["agents.getMany"], (oldData) => {
+        const agentWithMeetingCount = {
+          ...updatedAgent,
+          meetingCount: (updatedAgent as AgentGetOne).meetingCount ?? 0,
+        };
+        if (!oldData || !oldData.items) {
+          return { items: [agentWithMeetingCount] };
+        }
+        // Update the specific agent in the items array
+        return {
+          items: oldData.items.map((item) =>
+            item.id === initialValues.id ? agentWithMeetingCount : item
+          ),
+        };
+      });
+
+      // Invalidate queries in the background
+      queryClient.invalidateQueries({ queryKey: ["agents.getMany"] });
+      if (initialValues?.id) {
+        queryClient.invalidateQueries({
+          queryKey: ["agents.getOne", initialValues.id],
+        });
+      }
+
+      toast.success("Agent updated successfully!");
+      onSuccess?.();
+    },
+    onError: (error: { message: string; code?: string }) => {
+      toast.error(error.message);
     },
   });
 
@@ -77,11 +102,14 @@ export const AgentForm = ({ onSuccess, onCancel, initialValues = {} }: AgentForm
   });
 
   const isEdit = !!initialValues?.id;
-  const isPending = createAgent.isPending;
+  const isPending = createAgent.isPending || updateAgent.isPending;
 
   const onSubmit = (values: z.infer<typeof AgentsInsertSchema>) => {
     if (isEdit) {
-      console.log("TODO: Update Agent", values);
+      updateAgent.mutate({
+        ...values,
+        id: initialValues.id!,
+      });
     } else {
       createAgent.mutate(values);
     }
