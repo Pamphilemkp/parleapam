@@ -34,12 +34,21 @@ export const AgentForm = ({ onSuccess, onCancel, initialValues = {} }: AgentForm
   }
 
   const createAgent = trpc.agents.create.useMutation({
-    onSuccess: async (newAgent) => {
+    onSuccess: async (
+      newAgent: {
+        id: string;
+        createdAt: string;
+        updatedAt: string;
+        userId: string;
+        name: string;
+        instructions: string;
+      }
+    ) => {
       // Optimistically update the cache
       queryClient.setQueryData<AgentsGetManyResponse>(["agents.getMany"], (oldData) => {
         const agentWithMeetingCount = {
           ...newAgent,
-          meetingCount: (newAgent as AgentGetOne).meetingCount ?? 0,
+          meetingCount: 0,
         };
         if (!oldData || !oldData.items) {
           return { items: [agentWithMeetingCount] };
@@ -59,13 +68,24 @@ export const AgentForm = ({ onSuccess, onCancel, initialValues = {} }: AgentForm
   });
 
   const updateAgent = trpc.agents.update.useMutation({
-    onSuccess: async (updatedAgent) => {
+    onSuccess: async (
+      updatedAgent: {
+        id: string;
+        name: string;
+        createdAt: string;
+        updatedAt: string;
+        userId: string;
+        instructions: string;
+      }
+    ) => {
+      // Add meetingCount if missing (fallback to 0 or from initialValues)
+      const agentWithMeetingCount = {
+        ...updatedAgent,
+        meetingCount: initialValues.meetingCount ?? 0,
+      };
+
       // Optimistically update the cache
       queryClient.setQueryData<AgentsGetManyResponse>(["agents.getMany"], (oldData) => {
-        const agentWithMeetingCount = {
-          ...updatedAgent,
-          meetingCount: (updatedAgent as AgentGetOne).meetingCount ?? 0,
-        };
         if (!oldData || !oldData.items) {
           return { items: [agentWithMeetingCount] };
         }
