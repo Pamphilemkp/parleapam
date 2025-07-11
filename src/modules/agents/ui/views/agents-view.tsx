@@ -25,9 +25,14 @@ const { data, isLoading, error } = trpc.agents.getMany.useQuery({
     ...filters
 }, {
     // enabled: !!session, // Uncomment and update if you have session logic
-    retry: (failureCount, error) => {
+    retry: (failureCount: number, error: unknown) => {
         // Don't retry on 401 errors
-        if (error?.data?.code === 'UNAUTHORIZED') {
+        if (
+            typeof error === "object" &&
+            error !== null &&
+            "data" in error &&
+            (error as { data?: { code?: string } }).data?.code === 'UNAUTHORIZED'
+        ) {
             return false;
         }
         return failureCount < 3;
