@@ -60,10 +60,13 @@ export const AgentForm = ({ onSuccess, onCancel, initialValues = {} }: AgentForm
       queryClient.invalidateQueries({ queryKey: ["agents.getMany"] });
 
       toast.success("Agent created successfully!");
+      //TODO: Invalidate free tier usage
       onSuccess?.();
     },
     onError: (error: { message: string; code?: string }) => {
       toast.error(error.message);
+
+      // TODO: check if error code is "FORBIDDEN", redirect to /upgrade 
     },
   });
 
