@@ -56,7 +56,7 @@ export const columns: ColumnDef<MeetingGetMany[number]>[] = [
                  <div className="flex  items-center gap-x-1">
                    <CornerDownRightIcon className="size-3 text-muted-foreground"/>
                    <span
-                    className="text-sm text-muted-foreground max-width-[200px] truncate capitalize">
+                    className="text-sm text-muted-foreground max-w-[200px] truncate capitalize">
                     {row.original.agent.name}</span>
                  </div>
                 <GeneratedAvatar
