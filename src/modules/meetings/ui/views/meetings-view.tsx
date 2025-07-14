@@ -8,8 +8,9 @@ export const MeetingsView = () => {
 
     const { data } = trpc.meetings.getMany.useQuery({});
   return (
-    <div>
-    {JSON.stringify(data)}
+    <div className="px-6">
+     TODO DATA TABLE
+    {JSON.stringify(data, null, 2)}
     </div>
   );
 }
