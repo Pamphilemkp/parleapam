@@ -7,10 +7,18 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import { loadSearchParams } from "@/modules/meetings/params";
+import type { SearchParams } from "nuqs/server";
+import { MeetingStatus } from "@/modules/meetings/types"; 
 
-const MeetingPage = async() => {
+interface Props {
+    searchParams: Promise<SearchParams>;
+};
 
-    
+const MeetingPage = async({ searchParams }: Props) => {
+
+    const filters = await loadSearchParams(searchParams);
+
     const session = await auth.api.getSession({
             headers: await headers(),
     });
@@ -20,9 +28,28 @@ const MeetingPage = async() => {
     }
 
     const queryClient = getQueryClient();
+    // Only allow valid status values for getMany input // Adjust import path as needed
+
+    const allowedStatuses = [
+        MeetingStatus.Upcoming,
+        MeetingStatus.Active,
+        MeetingStatus.Completed,
+        MeetingStatus.Processing,
+        MeetingStatus.Cancelled,
+    ] as const;
+
+    type AllowedStatus = typeof allowedStatuses[number];
+
+    const safeFilters = {
+        ...filters,
+        status: allowedStatuses.includes(filters.status as AllowedStatus)
+            ? filters.status
+            : null,
+    };
+
     void queryClient.prefetchQuery({
-        queryKey: ['meetings.getMany', {}],
-        queryFn: () => trpc.meetings.getMany({}),
+        queryKey: ['meetings.getMany', safeFilters],
+        queryFn: () => trpc.meetings.getMany(safeFilters),
     });
 
   return (
