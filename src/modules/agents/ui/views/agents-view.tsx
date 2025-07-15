@@ -53,15 +53,7 @@ const items = data?.items ?? [];
 
 return (
     <div className="flex-1 pb-4 px-4 md:px-8 flex flex-col gap-y-8">
-        
-        {items.length === 0 ? (
-            <EmptyState
-                title="Create your first agent"
-                description="Create an agent to join your meetings. Each agent will follow your instructions and can interact with participants during the call"
-            />
-        ): (
-        <>
-            <DataTable 
+         <DataTable 
                 data={items} 
                 columns={columns} 
                 onRowClick={(row) => router.push(`/agents/${row.id}`)}
@@ -71,10 +63,12 @@ return (
                 totalPages={data?.totalPages ?? 0}
                 onPageChange={(page: number)=> setFilters({page})}
             />
-        </>
-        )
-        
-        
+        {items.length === 0 && (
+            <EmptyState
+                title="Create your first agent"
+                description="Create an agent to join your meetings. Each agent will follow your instructions and can interact with participants during the call"
+            />
+        ) 
         }
     </div>
 );
