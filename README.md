@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🧠 Parle à Pam AI
 
-## Getting Started
+**Parle à Pam AI** is a full-stack AI-powered video call platform that brings intelligent real-time communication to life. Built with the latest web technologies, it allows users to host video calls with custom AI agents, generate smart summaries and transcripts, replay past meetings, and interact with AI in context — all in a seamless and mobile-friendly experience.
 
-First, run the development server:
+## 🚀 What You'll Find
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+In this project, we built an intelligent meeting experience from scratch:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- 📞 **AI-powered real-time video calls** with [Stream Video SDK](https://getstream.io/video/)
+- 🤖 **Custom AI agents** that join and respond live
+- 🧠 **OpenAI integration** for summaries, context-aware chat, and Q&A
+- 📝 **Automated meeting summaries, transcripts, and recordings**
+- 📂 **Meeting history**, searchable transcripts, and playback
+- 💬 **AI Chat** trained on each meeting’s context
+- 🔍 **Live transcript search**
+- 🎞️ **Post-call video playback interface**
+- 🔐 **Modern authentication** (Better Auth)
+- 💳 **Paid subscriptions** with [Polar](https://polar.sh)
+- 📱 **Fully responsive UI** for mobile and desktop
+- ⚙️ **Background jobs** with [Inngest](https://www.inngest.com)
+- 🧑‍💻 **AI-assisted code reviews** using CodeRabbit
+- 🌐 Built with **Next.js 15**, **React 19**, **Tailwind v4**, and **Shadcn/ui**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠️ Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Framework**: Next.js 15, React 19
+- **Styling**: Tailwind CSS v4, Shadcn/ui
+- **Video & Chat**: Stream SDKs
+- **AI**: OpenAI GPT-4
+- **Jobs**: Inngest background tasks
+- **Auth**: Better Auth (custom OAuth/session handling)
+- **Payments**: Polar subscriptions
+- **Dev Workflow**: GitHub + CodeRabbit for AI PR reviews
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+🧪 This project is ideal for developers interested in building AI-first applications, video conferencing tools, or SaaS platforms with real-time features.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
