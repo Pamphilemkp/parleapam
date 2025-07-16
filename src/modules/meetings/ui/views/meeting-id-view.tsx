@@ -9,6 +9,10 @@ import { useRouter } from "next/navigation";
 import { useConfirm } from "@/hooks/use-confirm";
 import { UpdateMeetingDialog } from "../components/update-meeting-dialog";
 import { useState } from "react";
+import { UpcomingState } from "../components/upcoming-state";
+import { ActiveState } from "../components/active-state";
+import { CancelledState } from "../components/cancelled-state";
+import { ProcessingState } from "../components/processing-state";
 
 interface Props {
     meetingId: string;
@@ -46,7 +50,13 @@ interface Props {
 
             await removeMeeting.mutateAsync({ id: meetingId });
         };
-    
+
+        const isActive = data?.status === "active";
+        const isUpcoming = data?.status === "upcoming";
+        const isCompleted = data?.status === "completed";
+        const isCancelled = data?.status === "cancelled";
+        const isProcessing = data?.status === "processing";
+
 
     return (
         <>
@@ -65,7 +75,17 @@ interface Props {
                     onEdit={() => {setUpdateMeetingDialogOpen(true)}}
                     onRemove={() => {handleRemoveMeeting()}}
                 />
-                {JSON.stringify(data, null, 2)}
+                {isCancelled &&  <CancelledState />}
+                {isCompleted && <div>Completed</div>}
+                {isUpcoming && ( 
+                    <UpcomingState
+                    meetingId={meetingId}
+                    onCancel={() => {}}
+                    isCancelling={false}
+                />
+                )}
+                {isActive && <ActiveState meetingId={meetingId} />}
+                {isProcessing && <ProcessingState />}
             </div>
         
         </>
