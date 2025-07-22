@@ -14,6 +14,8 @@ import {
 import { formatDate } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { formatDuration } from "@/lib/utils";
+import { Transcript } from "./transcript";
+import { ChatProvider } from "./chat-provider";
 
 interface Props {
     data: MeetingGetOne;
@@ -58,6 +60,12 @@ export const CompletedState = ({ data }: Props) => {
                             Ask AI
                         </TabsTrigger>
                     </TabsList>
+                    <TabsContent value="chat">
+                            <ChatProvider meetingId={data.id} meetingName={data.name} />
+                    </TabsContent>
+                    <TabsContent value="transcript">
+                            <Transcript meetingId={data.id} />
+                    </TabsContent>
                     <TabsContent value="recording">
                         <div className="bg-white px-4 py-5 rounded-lg border">
                            <video
@@ -119,7 +127,7 @@ export const CompletedState = ({ data }: Props) => {
                                             <ol className="list-decimal pl-6 mb-6" {...props} />
                                         ),
                                         li: (props) => (
-                                            <li className="mb-" {...props} />
+                                            <li className="mb-2" {...props} />
                                         ),
                                         strong: (props) => ( <strong className="font-semibold" {...props} />),
                                         code: (props) => ( <code className="bg-gray-100 px-1 py-0.5 rounded" {...props} />),
