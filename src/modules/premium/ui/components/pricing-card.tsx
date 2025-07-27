@@ -116,14 +116,13 @@ export const PricingCard = ({
         </div>
       </div>
       <div className="py-6">
-        <Separator className="opacity-10 text-[5D6B68]" />
+        <Separator className="opacity-10 text-[#5D6B68]" />
       </div>
       <Button 
         onClick={onClick}
         className="w-full"
         size="lg"
         disabled={!onClick}
-        onAbort={onClick}
         variant={variant === "highlighted" ? "default" : "outline"}
       >
         {buttonText}

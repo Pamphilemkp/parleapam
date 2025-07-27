@@ -24,11 +24,11 @@ const Page = async() => {
 
     const queryClient = getQueryClient();
     void queryClient.prefetchQuery({
-        queryKey: ['premium'],
+         queryKey: ['premium', 'currentSubscription'],
         queryFn: () => trpc.premium.getCurrentSubscription(),
     });
         void queryClient.prefetchQuery({
-        queryKey: ['premium'],
+        queryKey: ['premium', 'products'],
         queryFn: () => trpc.premium.getProducts(),
     });
 
