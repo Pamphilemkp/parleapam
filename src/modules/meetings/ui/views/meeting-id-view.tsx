@@ -33,7 +33,7 @@ interface Props {
             toast.success("Meeting removed successfully");
             router.push("/meetings");
 
-            //TODO: invalidate free tier usage
+            await trpcContext.premium.getFreeUsage.invalidate();
         },
         onError: (error: { message: string }) => {
             toast.error(`Error removing meeting: ${error.message}`);

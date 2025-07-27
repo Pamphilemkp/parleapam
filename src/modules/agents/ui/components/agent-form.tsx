@@ -19,6 +19,7 @@ import {
 import { GeneratedAvatar } from "@/components/generated-avatar";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface AgentFormProps {
   onSuccess?: () => void;
@@ -28,6 +29,7 @@ interface AgentFormProps {
 
 export const AgentForm = ({ onSuccess, onCancel, initialValues = {} }: AgentFormProps) => {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   interface AgentsGetManyResponse {
     items: AgentGetOne[];
@@ -56,17 +58,22 @@ export const AgentForm = ({ onSuccess, onCancel, initialValues = {} }: AgentForm
         return { items: [...oldData.items, agentWithMeetingCount] };
       });
 
-      // Invalidate queries in the background
+      
       queryClient.invalidateQueries({ queryKey: ["agents.getMany"] });
 
       toast.success("Agent created successfully!");
-      //TODO: Invalidate free tier usage
+      
+      queryClient.invalidateQueries({ queryKey: ["premium.getFreeUsage"] });
       onSuccess?.();
     },
     onError: (error: { message: string; code?: string }) => {
       toast.error(error.message);
 
       // TODO: check if error code is "FORBIDDEN", redirect to /upgrade 
+      if (error.code === "FORBIDDEN") {
+        // Redirect to upgrade page
+        router.push("/upgrade");
+      }
     },
   });
 

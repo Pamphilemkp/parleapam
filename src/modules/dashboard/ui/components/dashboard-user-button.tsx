@@ -65,7 +65,9 @@ const onLogout = () => {
                         </DrawerDescription>
                     </DrawerHeader>
                     <DrawerFooter>
-                        <Button variant="outline" onClick={()=>{}}>
+                        <Button
+                         variant="outline"
+                         onClick={()=>{authClient.customer.portal()}}>
                             <CreditCardIcon className="size-4 text-black" />
                             Billing
                         </Button>
@@ -102,7 +104,10 @@ const onLogout = () => {
                 </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer size-4 flex items-center justify-between w-full">
+            <DropdownMenuItem
+            onClick={() => authClient.customer.portal()}
+             className="cursor-pointer size-4 flex items-center justify-between w-full"
+             >
                 <span className="font-medium">Billing</span>
                 <CreditCardIcon className="size-4"/>
             </DropdownMenuItem>

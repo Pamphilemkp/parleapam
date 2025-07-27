@@ -27,6 +27,7 @@ export const AgentIdView = ({agentId}: Props) => {
     const removeAgent = trpc.agents.remove.useMutation({
         onSuccess: async () => {
             await trpcContext.agents.getMany.invalidate();
+            await trpcContext.premium.getFreeUsage.invalidate();
             router.push("/agents");
         },
         onError: (error: { message: string }) => {
