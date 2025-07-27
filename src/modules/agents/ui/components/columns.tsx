@@ -1,7 +1,6 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { AgentGetMany } from "../../types"
 import { GeneratedAvatar } from "@/components/generated-avatar"
 import { CornerDownRightIcon, VideoIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -9,8 +8,14 @@ import { Badge } from "@/components/ui/badge"
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
 
+// Example AgentGetMany type (update this according to your actual type definition)
+export type AgentGetMany = {
+  name: string;
+  instructions: string;
+  meetingCount: number;
+};
 
-export const columns: ColumnDef<AgentGetMany[number]>[] = [
+export const columns: ColumnDef<AgentGetMany>[] = [
   {
     accessorKey: "name",
     header: "Agent Name",

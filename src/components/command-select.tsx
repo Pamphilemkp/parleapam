@@ -73,13 +73,12 @@ export const CommandSelect = ({
                 <CommandGroup>
                     {options.map((option) => (
                     <CommandItem
-                        key={option.id}
+                        key={`option-${option.id}`}
                         value={option.value}
                         onSelect={() => {
-                        onSelect(option.value);
-                        setOpen(false);
+                            onSelect(option.value);
+                            setOpen(false);
                         }}
-                        className="cursor-pointer"
                     >
                         {option.children}
                     </CommandItem>
