@@ -82,7 +82,6 @@ interface Props {
                     <UpcomingState
                     meetingId={meetingId}
                     onCancel={() => {}}
-                    isCancelling={false}
                 />
                 )}
                 {isActive && <ActiveState meetingId={meetingId} />}
