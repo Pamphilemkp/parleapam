@@ -34,40 +34,66 @@ interface MeetingsGetManyResponse {
   items: MeetingGetOne[];
 }
 
+interface AgentType {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+  name: string;
+  instructions: string;
+  meetingCount: number;
+}
+
 export const MeetingForm = ({ onSuccess, onCancel, initialValues = {} }: MeetingFormProps) => {
   const queryClient = useQueryClient();
   const router = useRouter();
   const [openNewAgentDialog, setOpenNewAgentDialog] = useState(false);
   const [agentSearch, setAgentSearch] = useState("");
+
   const agents = trpc.agents.getMany.useQuery({
     pageSize: 100,
     search: agentSearch,
   });
 
+  // Debug agent IDs for uniqueness
+  if (agents.data?.items) {
+    const agentIds = agents.data.items
+      .filter((agent): agent is AgentType => typeof agent === "object" && agent !== null && "id" in agent)
+      .map((agent) => agent.id);
+    console.log("Agent IDs:", agentIds);
+    const uniqueIds = new Set(agentIds);
+    if (agentIds.length !== uniqueIds.size) {
+      console.warn("Duplicate agent IDs detected:", agentIds);
+    }
+  }
+
   const createMeeting = trpc.meetings.create.useMutation({
     onMutate: async (newMeeting) => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["meetings.getMany"] });
-      
-      // Snapshot the previous value
       const previousMeetings = queryClient.getQueryData<MeetingsGetManyResponse>(["meetings.getMany"]);
-      
-      // Optimistically update the cache
+
       queryClient.setQueryData<MeetingsGetManyResponse>(["meetings.getMany"], (oldData) => {
-        const agentObj =
-          agents.data?.items?.find((agent) => agent.id === newMeeting.agentId) ?? {
+        const agentObj: AgentType =
+          (agents.data?.items?.find(
+            (agent) =>
+              typeof agent === "object" &&
+              agent !== null &&
+              "id" in agent &&
+              agent.id === newMeeting.agentId
+          ) as AgentType) ?? {
             id: newMeeting.agentId ?? "",
             createdAt: "",
             updatedAt: "",
             userId: "",
             name: "",
             instructions: "",
+            meetingCount: 0,
           };
 
         const meetingWithAllFields: MeetingGetOne = {
           ...newMeeting,
-          id: crypto.randomUUID(), // Temporary ID for optimistic update
-          name: newMeeting.name !== undefined ? newMeeting.name : "", // Ensure name is always a string
+          id: crypto.randomUUID(),
+          name: newMeeting.name ?? "",
           status: "upcoming",
           startedAt: null,
           endedAt: null,
@@ -77,11 +103,11 @@ export const MeetingForm = ({ onSuccess, onCancel, initialValues = {} }: Meeting
           agentId: newMeeting.agentId ?? "",
           duration: 0,
           agent: agentObj,
-          createdAt: "",
-          updatedAt: "",
-          userId: ""
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          userId: "",
         };
-        
+
         return oldData?.items
           ? { items: [...oldData.items, meetingWithAllFields] }
           : { items: [meetingWithAllFields] };
@@ -90,21 +116,16 @@ export const MeetingForm = ({ onSuccess, onCancel, initialValues = {} }: Meeting
       return { previousMeetings };
     },
     onSuccess: async (data) => {
-      // Invalidate relevant queries
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["meetings.getMany"] }),
         queryClient.invalidateQueries({ queryKey: ["meetings.getOne", data.id] }),
         queryClient.invalidateQueries({ queryKey: ["premium.getFreeUsage"] }),
       ]);
-
-      // Refetch to ensure UI updates
       await queryClient.refetchQueries({ queryKey: ["meetings.getMany"] });
-      
       toast.success("Meeting created successfully!");
       onSuccess?.(data.id);
     },
     onError: (error: { message: string; code?: string }, _variables, context) => {
-      // Revert optimistic update on error
       queryClient.setQueryData(["meetings.getMany"], context?.previousMeetings);
       if (error.code === "FORBIDDEN") {
         router.push("/upgrade");
@@ -112,48 +133,48 @@ export const MeetingForm = ({ onSuccess, onCancel, initialValues = {} }: Meeting
       toast.error(error.message);
     },
     onSettled: () => {
-      // Ensure queries are refetched after settling
       queryClient.invalidateQueries({ queryKey: ["meetings.getMany"] });
       queryClient.invalidateQueries({ queryKey: ["premium.getFreeUsage"] });
     },
   });
 
   const updateMeeting = trpc.meetings.update.useMutation({
-    onMutate: async (updatedMeeting) => {
+    onMutate: async (updatedMeeting: { name: string; agentId: string; id: string }) => {
       await queryClient.cancelQueries({ queryKey: ["meetings.getMany"] });
-      
       const previousMeetings = queryClient.getQueryData<MeetingsGetManyResponse>(["meetings.getMany"]);
-      
+
       queryClient.setQueryData<MeetingsGetManyResponse>(["meetings.getMany"], (oldData) => {
-        const agentObj =
-          agents.data?.items?.find((agent) => agent.id === updatedMeeting.agentId) ?? {
+        const agentObj: AgentType =
+          agents.data?.items?.find(
+            (agent): agent is AgentType =>
+              typeof agent === "object" &&
+              agent !== null &&
+              "id" in agent &&
+              agent.id === updatedMeeting.agentId
+          ) ?? {
             id: updatedMeeting.agentId ?? "",
             createdAt: "",
             updatedAt: "",
             userId: "",
             name: "",
             instructions: "",
+            meetingCount: 0,
           };
 
-        // Cast updatedMeeting to MeetingGetOne to satisfy TypeScript
-        const meeting = updatedMeeting as Partial<MeetingGetOne>;
-
+        // Fill in the missing fields with defaults for optimistic update
         const meetingWithAllFields: MeetingGetOne = {
-          ...meeting,
-          id: meeting.id ?? "", // Ensure id is always a string
-          name: meeting.name !== undefined ? meeting.name : "", // Ensure name is always a string
-          status: meeting.status ?? "upcoming",
-          startedAt: meeting.startedAt ?? null,
-          endedAt: meeting.endedAt ?? null,
-          transcriptUrl: meeting.transcriptUrl ?? null,
-          recordingUrl: meeting.recordingUrl ?? null,
-          summary: meeting.summary ?? null,
-          agentId: meeting.agentId ?? "",
-          duration: meeting.duration ?? 0,
+          ...updatedMeeting,
+          status: "upcoming",
+          startedAt: null,
+          endedAt: null,
+          transcriptUrl: null,
+          recordingUrl: null,
+          summary: null,
+          duration: 0,
           agent: agentObj,
-          createdAt: "",
-          updatedAt: "",
-          userId: ""
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          userId: "",
         };
 
         return oldData?.items
@@ -173,9 +194,7 @@ export const MeetingForm = ({ onSuccess, onCancel, initialValues = {} }: Meeting
         queryClient.invalidateQueries({ queryKey: ["meetings.getOne", initialValues.id] }),
         queryClient.invalidateQueries({ queryKey: ["premium.getFreeUsage"] }),
       ]);
-
       await queryClient.refetchQueries({ queryKey: ["meetings.getMany"] });
-      
       toast.success("Meeting updated successfully!");
       onSuccess?.();
     },
@@ -214,6 +233,25 @@ export const MeetingForm = ({ onSuccess, onCancel, initialValues = {} }: Meeting
     }
   };
 
+  // Handle loading and error states
+  if (agents.isLoading) {
+    return (
+      <Form {...form}>
+        <div className="text-center text-sm text-muted-foreground">Loading agents...</div>
+      </Form>
+    );
+  }
+
+  if (agents.isError) {
+    return (
+      <Form {...form}>
+        <div className="text-center text-sm text-destructive">
+          Error loading agents: {agents.error.message}
+        </div>
+      </Form>
+    );
+  }
+
   return (
     <>
       <NewAgentDialog
@@ -244,7 +282,7 @@ export const MeetingForm = ({ onSuccess, onCancel, initialValues = {} }: Meeting
                 <FormControl>
                   <CommandSelect
                     options={
-                      agents.data?.items?.map((agent) => ({
+                      (agents.data?.items as AgentType[] | undefined)?.map((agent) => ({
                         id: agent.id,
                         value: agent.id,
                         children: (
