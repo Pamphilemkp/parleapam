@@ -3,7 +3,7 @@ import { ErrorState } from "@/components/error-state";
 import { LoadingState } from "@/components/loading-state";
 import  { trpc } from "@/trpc/client";
 import { DataTable } from "@/components/data-table";
-import { columns } from "../components/columns";
+import { AgentGetMany, columns } from "../components/columns";
 import { EmptyState } from "@/components/empty-state";
 import { useAgentsFilters } from "../../hooks/use-agents-filters";
 import { DataPagination } from "../components/data-pagination";
@@ -49,14 +49,19 @@ if (error) {
     return <ErrorState title="Error loading Agents" description="Please try again later"/>;
 }
 
-const items = data?.items ?? [];
+// Ensure items conform to AgentGetMany type
+const items: AgentGetMany[] = (data?.items ?? []).map((item) => ({
+    ...item,
+    name: "name" in item ? (item as AgentGetMany).name ?? "" : "",
+    instructions: "instructions" in item ? (item as AgentGetMany).instructions ?? "" : "",
+}));
 
 return (
     <div className="flex-1 pb-4 px-4 md:px-8 flex flex-col gap-y-8">
-         <DataTable 
+         <DataTable<AgentGetMany, unknown>
                 data={items} 
                 columns={columns} 
-                onRowClick={(row) => router.push(`/agents/${row.id}`)}
+                onRowClick={(row) => router.push(`/agents/${'id' in row ? row.id : ''}`)}
              />
             <DataPagination
                 page={filters.page}

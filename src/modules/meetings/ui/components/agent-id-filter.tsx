@@ -17,16 +17,16 @@ const AgentIdFilter = () => {
     <CommandSelect
       className="h-9"
       placeholder="Agent"
-      options={(data?.items ?? []).map((agent) => ({
-        id: agent.id,
-        value: agent.id,
+      options={(data?.items ?? []).map((agent, idx) => ({
+        id: String(idx),
+        value: String(idx),
         children: (
           <div className="flex items-center gap-x-2">
             <GeneratedAvatar
-              seed={agent.name}
+              seed={`Agent ${idx}`}
               variant="bottsNeutral"
               className="size-4" />
-            {agent.name}
+            {`Agent ${idx}`}
           </div>
         ),
       }))}

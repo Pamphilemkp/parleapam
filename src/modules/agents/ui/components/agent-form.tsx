@@ -69,7 +69,7 @@ export const AgentForm = ({ onSuccess, onCancel, initialValues = {} }: AgentForm
     onError: (error: { message: string; code?: string }) => {
       toast.error(error.message);
 
-      // TODO: check if error code is "FORBIDDEN", redirect to /upgrade 
+      //  check if error code is "FORBIDDEN", redirect to /upgrade 
       if (error.code === "FORBIDDEN") {
         // Redirect to upgrade page
         router.push("/upgrade");
