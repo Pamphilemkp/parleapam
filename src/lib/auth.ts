@@ -32,12 +32,12 @@ export const auth = betterAuth({
       prompt: "select_account",
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-      redirectURI: "https://yourdomain.com/api/auth/callback/google", // Explicitly set
+      redirectURI: process.env.NEXT_PUBLIC_BASE_URL + "/api/auth/callback/google",
     },
     github: {
       clientId: process.env.GITHUB_CLIENT_ID as string,
       clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
-      redirectURI: "https://yourdomain.com/api/auth/callback/github", // Explicitly set
+      redirectURI: process.env.NEXT_PUBLIC_BASE_URL + "/api/auth/callback/github",
     },
   },
   emailAndPassword: {
