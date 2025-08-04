@@ -6,6 +6,13 @@ import * as schema from "@/db/schema";
 import { polarClient } from  "./polar"
  
 
+if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    throw new Error("Missing required Google OAuth environment variables");
+}
+if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
+    throw new Error("Missing required GitHub OAuth environment variables");
+}
+
 export const auth = betterAuth({
     plugins: [
         polar({
@@ -20,23 +27,25 @@ export const auth = betterAuth({
             ]
         })
     ],
-    socialProviders: {
-        google: {
-        prompt: "select_account", 
-        clientId: process.env.GOOGLE_CLIENT_ID as string,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-         },
-        github: { 
-            clientId: process.env.GITHUB_CLIENT_ID as string, 
-            clientSecret: process.env.GITHUB_CLIENT_SECRET as string, 
-        }, 
+  socialProviders: {
+    google: {
+      prompt: "select_account",
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      redirectURI: "https://yourdomain.com/api/auth/callback/google", // Explicitly set
     },
-        emailAndPassword: {  
-        enabled: true
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID as string,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+      redirectURI: "https://yourdomain.com/api/auth/callback/github", // Explicitly set
     },
-    database: drizzleAdapter(db, {
-        provider: "pg",
-    schema
+  },
+  emailAndPassword: {
+    enabled: true
+  },
+  database: drizzleAdapter(db, {
+    provider: "pg",
+        schema
     })
 });
 
