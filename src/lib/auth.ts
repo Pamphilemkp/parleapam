@@ -7,6 +7,8 @@ import { polarClient } from  "./polar"
  
 
 export const auth = betterAuth({
+    trustHost: true, // ✅ REQUIRED for correct callback URL validation
+    useSecureCookies: true, // ✅ REQUIRED for iOS Safari cookie handling
     plugins: [
         polar({
             client: polarClient,
