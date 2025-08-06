@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion, easeInOut } from "framer-motion";
 import { Bot, Video, BookOpen, LifeBuoy } from "lucide-react";
 
-const whatsappNumber = "+9054288005892"; // Replace with your actual WhatsApp number (international format, no + or 00)
+const whatsappNumber = "+905428805892"; // Replace with your actual WhatsApp number (international format, no + or 00)
 const whatsappMessage = encodeURIComponent(
   "Hello, I am coming from Pam AI, and I need some support."
 );
