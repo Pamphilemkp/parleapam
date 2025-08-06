@@ -50,13 +50,14 @@ export const AgentIdView = ({agentId}: Props) => {
     return (
         <>
         <RemoveConfirmation />
-        {data && (
-          <UpdateAgentDialog
-            open={updateAgentDialogOpen}
-            onOpenChange={setUpdateAgentDialogOpen}
-            initialValues={data}
-          />
-        )}
+        
+          {data && (
+            <UpdateAgentDialog
+              open={updateAgentDialogOpen}
+              onOpenChange={setUpdateAgentDialogOpen}
+              initialValues={data}
+            />
+          )}
         <div className="flex-1 px-4  py-4 md:px-8 flex flex-col gap-4">
             <AgentIdViewHeader
                 agentId={agentId}
@@ -84,12 +85,10 @@ export const AgentIdView = ({agentId}: Props) => {
                         {data?.meetingCount} {data?.meetingCount === 1 ? "Meeting" : "Meetings"}
                     </Badge>
                     <div className="flex flex-col gap-y-4">
-                        <p className="text-lg font-medium">
-                           Instruction
-                        </p>
-                        <p className="text-neutral-800">
-                            {data?.instructions}
-                        </p>
+                    <p className="text-lg font-medium">Instruction</p>
+                    <p className="text-neutral-800 break-words whitespace-pre-wrap">
+                        {data?.instructions}
+                    </p>
                     </div>
                 </div>
             </div>

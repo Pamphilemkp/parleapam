@@ -31,6 +31,9 @@ export const Navbar = () => {
                       <Link href="#features" className="text-foreground hover:text-primary transition font-medium">
                         Features
                       </Link>
+                      <Link href="/agents" className="text-foreground hover:text-primary transition font-medium">
+                        AI - Dashboard
+                      </Link>
                       <Link
                         href="/sign-up"
                         className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold hover:bg-primary/90 transition shadow-md"
@@ -61,6 +64,9 @@ export const Navbar = () => {
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Features
+                      </Link>
+                      <Link href="/agents" className="text-foreground hover:text-primary transition font-medium">
+                        AI - Dashboard
                       </Link>
                       <Link
                         href="/sign-up"

@@ -1,4 +1,5 @@
 import HomeViews from "@/modules/home/ui/views/home-views";
+import { GetStarted } from "@/modules/home/ui/components/get-started";
 import { auth } from "@/lib/auth";
 // import { redirect } from "next/navigation";
 import { headers } from "next/headers";
@@ -11,7 +12,7 @@ const Page = async () => {
   });
 
   if (session) {
-    return null;
+    return <><GetStarted /></>;
   }
 
      return (
