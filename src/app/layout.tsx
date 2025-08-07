@@ -24,6 +24,9 @@ export default function RootLayout({
       <NuqsAdapter>
       <TRPCProvider>
         <html lang="en">
+          <head>
+            <meta name="apple-mobile-web-app-capable" content="yes" />
+          </head>
           <body
             className={`${inter.className} antialiased`}
           >

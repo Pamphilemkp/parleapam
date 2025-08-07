@@ -69,12 +69,12 @@ const form = useForm<z.infer<typeof formSchema>>({
   
       authClient.signIn.social({
         provider: provider,
-        callbackURL: "/",
+        callbackURL: `${window.location.origin}/`,
       }, {
         onSuccess: () => {
           // Redirect to the dashboard or home page
           setPending(false);
-          router.push("/");
+          // router.push("/");
         }, onError: ({error}) => {
           setPending(false);
           setError(error.message);
