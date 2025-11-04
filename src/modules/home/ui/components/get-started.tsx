@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { motion, easeInOut } from "framer-motion";
 import { Bot, Video, BookOpen, LifeBuoy } from "lucide-react";
+import { AgentCatalog } from "@/modules/agents/ui/components/agent-catalog";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { trpc } from "@/trpc/client";
+import { toast } from "sonner";
 
 const whatsappNumber = "+905428805892"; // Replace with your actual WhatsApp number (international format, no + or 00)
 const whatsappMessage = encodeURIComponent(
@@ -56,6 +61,68 @@ const itemVariants = {
 };
 
 export function GetStarted() {
+  const router = useRouter();
+  const createFromSample = trpc.agents.createFromSample.useMutation();
+  const createMeeting = trpc.meetings.create.useMutation();
+
+  // Check for selected agent from signup flow
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const selectedAgentId = sessionStorage.getItem('selectedAgentId');
+    const selectedAgentIsPremium = sessionStorage.getItem('selectedAgentIsPremium') === 'true';
+
+    if (selectedAgentId) {
+      // Clear sessionStorage
+      sessionStorage.removeItem('selectedAgentId');
+      sessionStorage.removeItem('selectedAgentIsPremium');
+
+      // Check premium access
+      if (selectedAgentIsPremium) {
+        // For premium agents, check subscription first
+        // For now, just create the meeting - premium check happens in createFromSample
+        toast.info('Setting up your meeting...');
+      }
+
+      // Create agent and start meeting
+      createFromSample.mutate(
+        { sampleAgentId: selectedAgentId },
+        {
+          onSuccess: (data) => {
+            createMeeting.mutate(
+              {
+                name: `Meeting with ${data.agent.name}`,
+                agentId: data.agentId,
+              },
+              {
+                onSuccess: (meeting) => {
+                  toast.success('Starting your meeting!');
+                  router.push(`/call/${meeting.id}`);
+                },
+                onError: (error) => {
+                  if (error.data?.code === 'FORBIDDEN') {
+                    toast.error('Premium subscription required for this agent');
+                    router.push('/upgrade');
+                  } else {
+                    toast.error('Failed to create meeting');
+                  }
+                },
+              }
+            );
+          },
+          onError: (error) => {
+            if (error.data?.code === 'FORBIDDEN') {
+              toast.error('Premium subscription required for this agent');
+              router.push('/upgrade');
+            } else {
+              toast.error('Failed to set up agent');
+            }
+          },
+        }
+      );
+    }
+  }, [createFromSample, createMeeting, router]);
+
   return (
     <motion.section
       className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-24"
@@ -70,7 +137,7 @@ export function GetStarted() {
         Here&apos;s how to get started quickly and make the most of your AI-powered communication experience.
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-16">
         {steps.map(({ icon, title, description, href }, idx) => (
           <motion.div
             key={idx}
@@ -91,6 +158,23 @@ export function GetStarted() {
           </motion.div>
         ))}
       </div>
+
+      {/* Sample Agents Section */}
+      <motion.div
+        className="mt-16"
+        initial="hidden"
+        animate="visible"
+        variants={itemVariants}
+      >
+        <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4">
+          Start a Meeting Instantly
+        </h2>
+        <p className="text-center text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+          Choose from our ready-to-use AI agents and start having intelligent conversations right away.
+          No setup required—just click and start talking.
+        </p>
+        <AgentCatalog />
+      </motion.div>
     </motion.section>
   );
 }

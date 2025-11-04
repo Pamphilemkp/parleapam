@@ -4,9 +4,10 @@ import type { QueryClient } from '@tanstack/react-query';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { httpBatchLink } from '@trpc/client';
 import { createTRPCReact } from '@trpc/react-query';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { makeQueryClient } from './query-client';
 import type { AppRouter } from './routers/_app';
+
 export const trpc = createTRPCReact<AppRouter>();
 let clientQueryClientSingleton: QueryClient;
 function getQueryClient() {
@@ -24,26 +25,54 @@ function getUrl() {
   })();
   return `${base}/api/trpc`;
 }
+
+// Create a context to pass loading functions to tRPC interceptor
+let loadingContextRef: { startLoading: (id: string, msg?: string) => void; stopLoading: (id: string) => void } | null = null;
+
+export function setLoadingContext(context: typeof loadingContextRef) {
+  loadingContextRef = context;
+}
+
 export function TRPCProvider(
   props: Readonly<{
     children: React.ReactNode;
   }>,
 ) {
-  // NOTE: Avoid useState when initializing the query client if you don't
-  //       have a suspense boundary between this and the code that may
-  //       suspend because React will throw away the client on the initial
-  //       render if it suspends and there is no boundary
   const queryClient = getQueryClient();
+  const requestMapRef = useRef<Map<string, string>>(new Map());
+
   const [trpcClient] = useState(() =>
     trpc.createClient({
       links: [
         httpBatchLink({
-          // transformer: superjson, <-- if you use a data transformer
           url: getUrl(),
+          // Intercept requests to manage loading state
+          fetch: async (url, options) => {
+            const requestId = crypto.randomUUID();
+            requestMapRef.current.set(requestId, requestId);
+            
+            // Use loading context if available
+            if (loadingContextRef) {
+              loadingContextRef.startLoading(requestId, 'Loading...');
+            }
+
+            try {
+              const response = await fetch(url, options);
+              return response;
+            } catch (error) {
+              throw error;
+            } finally {
+              if (loadingContextRef) {
+                loadingContextRef.stopLoading(requestId);
+              }
+              requestMapRef.current.delete(requestId);
+            }
+          },
         }),
       ],
     }),
   );
+
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
