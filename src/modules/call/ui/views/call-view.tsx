@@ -26,6 +26,7 @@ const CallView = ({ meetingId }: Props) => {
         <CallProvider
          meetingId={meetingId}
          meetingName={data?.name ?? "Meeting"}
+         agentId={data?.agentId}
           />
     );
 };

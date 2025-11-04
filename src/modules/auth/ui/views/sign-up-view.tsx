@@ -61,8 +61,9 @@ const form = useForm<z.infer<typeof formSchema>>({
     }, {
       onSuccess: () => {
         // Redirect to the dashboard or home page
+        // GetStarted component will check for selected agent and auto-start meeting
         setPending(false);
-       router.push("/");
+        router.push("/");
       },
       onError: ({error}) => {
         setPending(false);

@@ -9,6 +9,8 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { loadSearchParams } from "@/modules/agents/params";
 import { SearchParams } from "nuqs/server";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AgentCatalog } from "@/modules/agents/ui/components/agent-catalog";
 
 
 interface Props {
@@ -40,13 +42,26 @@ const Page = async({searchParams}: Props) => {
     return (
         <>
         <AgentsListHeader />
-        <HydrationBoundary state={dehydrate(queryClient)}>
-            <Suspense fallback={<AgentsViewLoading />} >
-                <ErrorBoundary fallback={<AgentsViewError />}>
-                    <AgentsView />
-                </ErrorBoundary>
-            </Suspense>
-        </HydrationBoundary>
+        <div className="px-4 md:px-8 pb-4">
+            <Tabs defaultValue="my-agents" className="w-full">
+                <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+                    <TabsTrigger value="my-agents">My Agents</TabsTrigger>
+                    <TabsTrigger value="catalog">Agent Catalog</TabsTrigger>
+                </TabsList>
+                <TabsContent value="my-agents">
+                    <HydrationBoundary state={dehydrate(queryClient)}>
+                        <Suspense fallback={<AgentsViewLoading />} >
+                            <ErrorBoundary fallback={<AgentsViewError />}>
+                                <AgentsView />
+                            </ErrorBoundary>
+                        </Suspense>
+                    </HydrationBoundary>
+                </TabsContent>
+                <TabsContent value="catalog">
+                    <AgentCatalog />
+                </TabsContent>
+            </Tabs>
+        </div>
     </>
     )
 }

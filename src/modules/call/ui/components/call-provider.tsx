@@ -8,9 +8,10 @@ import { CallConnect } from "./call-connect";
 interface Props {
     meetingId: string;
     meetingName: string;
+    agentId?: string;
 }
 
-export const CallProvider = ({ meetingId, meetingName }: Props) => {
+export const CallProvider = ({ meetingId, meetingName, agentId }: Props) => {
 
     const { data, isPending } = authClient.useSession();
 
@@ -27,6 +28,7 @@ export const CallProvider = ({ meetingId, meetingName }: Props) => {
         <CallConnect
             meetingId={meetingId}
             meetingName={meetingName}
+            agentId={agentId}
             userId={data.user.id}
             userName={data.user.name}
             userImage={data.user.image ?? generateAvatarUri({

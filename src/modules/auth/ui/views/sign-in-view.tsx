@@ -21,6 +21,8 @@ import {
    FormLabel,
    FormMessage} from "@/components/ui/form";
 import { Alert, AlertTitle } from "@/components/ui/alert";
+import { IOSAuthFallback } from "../components/ios-auth-fallback";
+import { parseAuthError } from "@/lib/auth-errors";
 
 
 const formSchema = z.object({
@@ -74,10 +76,12 @@ const form = useForm<z.infer<typeof formSchema>>({
         onSuccess: () => {
           // Redirect to the dashboard or home page
           setPending(false);
-          // router.push("/");
+          router.push("/");
         }, onError: ({error}) => {
           setPending(false);
-          setError(error.message);
+          // Parse error for better iOS handling
+          const authError = parseAuthError(error);
+          setError(authError.message);
         }, 
       });
     }

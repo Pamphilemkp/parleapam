@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { VoiceInput } from "./voice-input";
 
 interface AgentFormProps {
   onSuccess?: () => void;
@@ -157,15 +158,28 @@ export const AgentForm = ({
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Instructions</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Instructions</FormLabel>
+                    <VoiceInput
+                      onTranscript={(text) => {
+                        const currentText = field.value || '';
+                        field.onChange(currentText ? `${currentText}\n\n${text}` : text);
+                        toast.success('Voice instructions added!');
+                      }}
+                      disabled={isPending}
+                    />
+                  </div>
                   <FormControl>
                     <Textarea
                       {...field}
-                      placeholder="You are a helpful psychologist teacher..."
+                      placeholder="You are a helpful psychologist teacher... Or click 'Record Voice' to speak your instructions."
                       className="h-32 resize-none overflow-y-auto"
                     />
                   </FormControl>
                   <FormMessage />
+                  <p className="text-xs text-muted-foreground">
+                    Describe how your AI agent should behave. You can type or use voice recording.
+                  </p>
                 </FormItem>
               )}
             />

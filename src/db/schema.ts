@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { pgTable, text, timestamp, boolean, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, pgEnum, jsonb } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
     id: text('id').primaryKey(),
@@ -52,6 +52,15 @@ export const agents = pgTable("agents", {
     name: text("name").notNull(),
     userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade"}),
     instructions: text("instructions").notNull(),
+    isSample: boolean("is_sample").default(false).notNull(),
+    isPremium: boolean("is_premium").default(false).notNull(),
+    category: text("category"), // 'education' | 'career' | 'language' | 'productivity'
+    icon: text("icon"),
+    description: text("description"),
+    capabilities: text("capabilities").array(), // Array of capability strings
+    useCases: text("use_cases").array(), // Array of use case strings
+    hasWhiteboard: boolean("has_whiteboard").default(false).notNull(),
+    hasGestures: boolean("has_gestures").default(false).notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow()
 })
@@ -76,6 +85,8 @@ export const meetings = pgTable("meetings", {
     transcriptUrl: text("transcript_url"),
     recordingUrl: text("recording_url"),
     summary: text("summary"),
+    whiteboardData: jsonb("whiteboard_data"),
+    whiteboardSnapshotUrl: text("whiteboard_snapshot_url"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow()
 })

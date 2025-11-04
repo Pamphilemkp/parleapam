@@ -171,6 +171,35 @@ export const meetingsRouter = createTRPCRouter({
             return updatedMeeting;
         }),
 
+    updateWhiteboard: protectedProcedure
+        .input(z.object({
+            id: z.string(),
+            whiteboardData: z.any().optional(),
+            whiteboardSnapshotUrl: z.string().optional(),
+        }))
+        .mutation(async({input, ctx}) => {
+            const [updatedMeeting] = await db
+                .update(meetings)
+                .set({
+                    whiteboardData: input.whiteboardData,
+                    whiteboardSnapshotUrl: input.whiteboardSnapshotUrl,
+                    updatedAt: new Date(),
+                })
+                .where(
+                    and(
+                        eq(meetings.id, input.id),
+                        eq(meetings.userId, ctx.auth.user.id)
+                    )
+                )
+                .returning();
+
+            if (!updatedMeeting) {
+                throw new TRPCError({code: "NOT_FOUND", message: "Meeting not found"});
+            }
+
+            return updatedMeeting;
+        }),
+
        create: premiumProcedure("meeting")
         .input(meetingsInsertSchema)
         .mutation(async({input, ctx}) => {
