@@ -8,6 +8,12 @@ const nextConfig: NextConfig = {
   },
   // Code splitting
   webpack: (config, { isServer }) => {
+    // Avoid bundling optional otel transport required by some server libs
+    config.resolve = config.resolve || {};
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      '@opentelemetry/winston-transport': false as unknown as string,
+    };
     if (!isServer) {
       config.optimization = {
         ...config.optimization,

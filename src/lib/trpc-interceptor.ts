@@ -1,5 +1,4 @@
 import { httpBatchLink } from '@trpc/client';
-import type { AppRouter } from '@/trpc/routers/_app';
 
 // This will be used to intercept tRPC requests and manage loading state
 // The actual integration happens in the TRPCProvider component

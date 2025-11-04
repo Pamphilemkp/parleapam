@@ -3,7 +3,7 @@
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
-import { parseAuthError, getAuthErrorUI, type AuthError } from '@/lib/auth-errors';
+import { parseAuthError, getAuthErrorUI } from '@/lib/auth-errors';
 
 interface IOSAuthFallbackProps {
   error: unknown;

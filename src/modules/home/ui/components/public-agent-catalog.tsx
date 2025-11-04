@@ -5,14 +5,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PremiumBadge } from '@/modules/agents/ui/components/premium-badge';
-import { useState } from 'react';
+import { } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sparkles, Zap, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
 
 export function PublicAgentCatalog() {
   const router = useRouter();
-  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 
   const handleStartMeeting = (agentId: string, isPremium: boolean) => {
     // Store selected agent in sessionStorage for after signup

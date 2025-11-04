@@ -29,10 +29,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Convert base64 to buffer
-    const audioBuffer = Buffer.from(audio.split(',')[1], 'base64');
+    const base64Data = audio.includes(',') ? audio.split(',')[1] : audio;
+    const audioBuffer = Buffer.from(base64Data, 'base64');
 
-    // Create form data for OpenAI
+    // Create form data for OpenAI (Node.js 18+ compatible)
     const formData = new FormData();
+    // Create a Blob from the buffer for FormData compatibility
     const audioBlob = new Blob([audioBuffer], { type: 'audio/webm' });
     formData.append('file', audioBlob, 'recording.webm');
     formData.append('model', 'whisper-1');

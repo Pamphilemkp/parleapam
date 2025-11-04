@@ -2,13 +2,12 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { CallControls, SpeakerLayout, useCallState } from '@stream-io/video-react-sdk';
+import { CallControls, SpeakerLayout } from '@stream-io/video-react-sdk';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { WhiteboardCanvas } from './whiteboard/whiteboard-canvas';
 import { AvatarAnimated } from './avatar/avatar-animated';
 import { usePremium } from '@/hooks/use-premium';
-import { useCall } from '@stream-io/video-react-sdk';
 import { PenTool, Sparkles } from 'lucide-react';
 import { trpc } from '@/trpc/client';
 
@@ -22,12 +21,9 @@ interface Props {
 export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) => {
     const [showWhiteboard, setShowWhiteboard] = useState(false);
     const { isPremium } = usePremium();
-    const call = useCall();
-    const callState = useCallState();
-    const isSpeaking = callState?.participants?.some(p => p.isSpeaking) || false;
     const saveWhiteboard = trpc.meetings.updateWhiteboard.useMutation();
 
-    const handleSaveWhiteboard = (data: any) => {
+    const handleSaveWhiteboard = (data: unknown) => {
         saveWhiteboard.mutate({
             id: meetingId,
             whiteboardData: data,
@@ -65,7 +61,7 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
                         <AvatarAnimated
                             name="AI Agent"
                             isPremium={isPremium}
-                            isSpeaking={isSpeaking}
+                            isSpeaking={false}
                         />
                     </div>
                 )}

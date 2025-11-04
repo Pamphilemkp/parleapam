@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PremiumBadge } from './premium-badge';
 import { type SampleAgent } from '@/modules/agents/constants/sample-agents';
-import { usePremium } from '@/hooks/use-premium';
+// Note: premium gating is handled server-side when cloning/creating
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/trpc/client';
 import { useState } from 'react';
@@ -18,7 +18,6 @@ interface AgentCardProps {
 
 export function AgentCard({ agent }: AgentCardProps) {
   const router = useRouter();
-  const { isPremium } = usePremium();
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const createMeeting = trpc.meetings.create.useMutation({
     onSuccess: (data) => {

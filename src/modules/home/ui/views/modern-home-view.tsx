@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Check, Play, Sparkles, Zap, MessageSquare, Video, BarChart3 } from 'lucide-react';
+import { ArrowRight, Play, Sparkles, Zap, MessageSquare, Video, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
+// import Image from 'next/image';
 import { PublicAgentCatalog } from '../components/public-agent-catalog';
 
 export default function ModernHomeView() {

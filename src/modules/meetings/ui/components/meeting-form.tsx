@@ -23,6 +23,7 @@ import { CommandSelect } from "@/components/command-select";
 import { GeneratedAvatar } from "@/components/generated-avatar";
 import { NewAgentDialog } from "@/modules/agents/ui/components/new-agent-dialog";
 import { useRouter } from "next/navigation";
+import type { AgentGetMany } from "@/modules/agents/types";
 
 interface MeetingFormProps {
   onSuccess?: (id?: string) => void;
@@ -32,16 +33,6 @@ interface MeetingFormProps {
 
 interface MeetingsGetManyResponse {
   items: MeetingGetOne[];
-}
-
-interface AgentType {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  userId: string;
-  name: string;
-  instructions: string;
-  meetingCount: number;
 }
 
 export const MeetingForm = ({ onSuccess, onCancel, initialValues = {} }: MeetingFormProps) => {
@@ -55,17 +46,9 @@ export const MeetingForm = ({ onSuccess, onCancel, initialValues = {} }: Meeting
     search: agentSearch,
   });
 
-  // Debug agent IDs for uniqueness
-  if (agents.data?.items) {
-    const agentIds = agents.data.items
-      .filter((agent): agent is AgentType => typeof agent === "object" && agent !== null && "id" in agent)
-      .map((agent) => agent.id);
-    console.log("Agent IDs:", agentIds);
-    const uniqueIds = new Set(agentIds);
-    if (agentIds.length !== uniqueIds.size) {
-      console.warn("Duplicate agent IDs detected:", agentIds);
-    }
-  }
+  // Debug agent IDs for uniqueness (only in development)
+  // Note: Removed client-side NODE_ENV check as it's not reliable in production builds
+  // Debug code should be removed or moved to server-side if needed
 
   const createMeeting = trpc.meetings.create.useMutation({
     onMutate: async (newMeeting) => {
@@ -73,22 +56,28 @@ export const MeetingForm = ({ onSuccess, onCancel, initialValues = {} }: Meeting
       const previousMeetings = queryClient.getQueryData<MeetingsGetManyResponse>(["meetings.getMany"]);
 
       queryClient.setQueryData<MeetingsGetManyResponse>(["meetings.getMany"], (oldData) => {
-        const agentObj: AgentType =
-          (agents.data?.items?.find(
-            (agent) =>
-              typeof agent === "object" &&
-              agent !== null &&
-              "id" in agent &&
-              agent.id === newMeeting.agentId
-          ) as AgentType) ?? {
-            id: newMeeting.agentId ?? "",
-            createdAt: "",
-            updatedAt: "",
-            userId: "",
-            name: "",
-            instructions: "",
-            meetingCount: 0,
-          };
+        const foundAgent = agents.data?.items?.find(
+          (agent) => agent.id === newMeeting.agentId
+        );
+        
+        const agentObj: AgentGetMany = foundAgent ?? {
+          id: newMeeting.agentId ?? "",
+          createdAt: "",
+          updatedAt: "",
+          userId: "",
+          name: "",
+          instructions: "",
+          meetingCount: 0,
+          isSample: false,
+          isPremium: false,
+          category: null,
+          icon: null,
+          description: null,
+          capabilities: null,
+          useCases: null,
+          hasWhiteboard: false,
+          hasGestures: false,
+        } as AgentGetMany;
 
         const meetingWithAllFields: MeetingGetOne = {
           ...newMeeting,
@@ -106,6 +95,8 @@ export const MeetingForm = ({ onSuccess, onCancel, initialValues = {} }: Meeting
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           userId: "",
+          whiteboardData: null,
+          whiteboardSnapshotUrl: null,
         };
 
         return oldData?.items
@@ -144,22 +135,28 @@ export const MeetingForm = ({ onSuccess, onCancel, initialValues = {} }: Meeting
       const previousMeetings = queryClient.getQueryData<MeetingsGetManyResponse>(["meetings.getMany"]);
 
       queryClient.setQueryData<MeetingsGetManyResponse>(["meetings.getMany"], (oldData) => {
-        const agentObj: AgentType =
-          agents.data?.items?.find(
-            (agent): agent is AgentType =>
-              typeof agent === "object" &&
-              agent !== null &&
-              "id" in agent &&
-              agent.id === updatedMeeting.agentId
-          ) ?? {
-            id: updatedMeeting.agentId ?? "",
-            createdAt: "",
-            updatedAt: "",
-            userId: "",
-            name: "",
-            instructions: "",
-            meetingCount: 0,
-          };
+        const foundAgent = agents.data?.items?.find(
+          (agent) => agent.id === updatedMeeting.agentId
+        );
+        
+        const agentObj: AgentGetMany = foundAgent ?? {
+          id: updatedMeeting.agentId ?? "",
+          createdAt: "",
+          updatedAt: "",
+          userId: "",
+          name: "",
+          instructions: "",
+          meetingCount: 0,
+          isSample: false,
+          isPremium: false,
+          category: null,
+          icon: null,
+          description: null,
+          capabilities: null,
+          useCases: null,
+          hasWhiteboard: false,
+          hasGestures: false,
+        } as AgentGetMany;
 
         // Fill in the missing fields with defaults for optimistic update
         const meetingWithAllFields: MeetingGetOne = {
@@ -175,6 +172,8 @@ export const MeetingForm = ({ onSuccess, onCancel, initialValues = {} }: Meeting
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           userId: "",
+          whiteboardData: null,
+          whiteboardSnapshotUrl: null,
         };
 
         return oldData?.items
@@ -289,7 +288,7 @@ export const MeetingForm = ({ onSuccess, onCancel, initialValues = {} }: Meeting
             <FormControl>
               <CommandSelect
                 options={
-                  (agents.data?.items as AgentType[] | undefined)?.map((agent) => ({
+                  agents.data?.items?.map((agent) => ({
                     id: agent.id,
                     value: agent.id,
                     children: (

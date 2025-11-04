@@ -15,7 +15,7 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   // Check for browser support
   const isSpeechRecognitionSupported = 
@@ -38,18 +38,24 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
     try {
       // Try browser speech recognition first (more accurate, real-time)
       if (isSpeechRecognitionSupported) {
-        const SpeechRecognition = 
-          (window as any).webkitSpeechRecognition || 
-          (window as any).SpeechRecognition;
+        // Type-safe access to SpeechRecognition constructors
+        const WebkitSpeechRecognition = (window as unknown as { webkitSpeechRecognition?: { new (): SpeechRecognition } }).webkitSpeechRecognition;
+        const StandardSpeechRecognition = (window as unknown as { SpeechRecognition?: { new (): SpeechRecognition } }).SpeechRecognition;
+        const SpeechRecognitionCtor = WebkitSpeechRecognition || StandardSpeechRecognition;
         
-        const recognition = new SpeechRecognition();
+        if (!SpeechRecognitionCtor) {
+          // Fallback if constructor is unavailable
+          await startAudioRecording();
+          return;
+        }
+        const recognition = new SpeechRecognitionCtor();
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = 'en-US';
 
         let finalTranscript = '';
 
-        recognition.onresult = (event: any) => {
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
           let interimTranscript = '';
           
           for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -75,7 +81,7 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
           setIsRecording(false);
         };
 
-        recognition.onerror = (event: any) => {
+        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
           console.error('Speech recognition error:', event.error);
           toast.error('Speech recognition failed. Trying audio recording...');
           // Fallback to audio recording
