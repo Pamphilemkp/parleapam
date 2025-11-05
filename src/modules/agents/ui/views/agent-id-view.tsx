@@ -58,35 +58,35 @@ export const AgentIdView = ({agentId}: Props) => {
               initialValues={data}
             />
           )}
-        <div className="flex-1 px-4  py-4 md:px-8 flex flex-col gap-4">
+        <div className="flex-1 px-2 sm:px-4 py-2 sm:py-4 md:px-8 flex flex-col gap-2 sm:gap-4 w-full max-w-full overflow-x-hidden">
             <AgentIdViewHeader
                 agentId={agentId}
                 agentName={data?.name ?? ""}
                 onEdit={() => {setUpdateAgentDialogOpen(true)}}
                 onRemove={() => handleRemoveAgent()}
             />
-            <div className="bg-white p-4 rounded-lg">
-                <div className="px-4 py-2 gap-y-5 flex flex-col col-span-5">
-                    <div className="flex items-center gap-x-3">
+            <div className="bg-white p-2 sm:p-4 rounded-lg w-full max-w-full">
+                <div className="px-2 sm:px-4 py-2 gap-y-3 sm:gap-y-5 flex flex-col">
+                    <div className="flex items-center gap-x-2 sm:gap-x-3">
                         <GeneratedAvatar
                             variant="bottsNeutral"
                             seed={data?.name?? ""}
-                            className="size-10"
+                            className="size-8 sm:size-10"
                         />
-                        <h2 className="text-2xl font-medium">
+                        <h2 className="text-lg sm:text-2xl font-medium break-words">
                             {data?.name}
                         </h2>
                     </div>
                     <Badge
                         variant="outline"
-                        className="flex items-center gap-x-2 [&>svg]:size-4"
+                        className="flex items-center gap-x-2 [&>svg]:size-4 w-fit text-xs sm:text-sm"
                         >
                         <VideoIcon className="text-blue-800"/>
                         {data?.meetingCount} {data?.meetingCount === 1 ? "Meeting" : "Meetings"}
                     </Badge>
-                    <div className="flex flex-col gap-y-4">
-                    <p className="text-lg font-medium">Instruction</p>
-                    <p className="text-neutral-800 break-words whitespace-pre-wrap">
+                    <div className="flex flex-col gap-y-2 sm:gap-y-4">
+                    <p className="text-base sm:text-lg font-medium">Instruction</p>
+                    <p className="text-sm sm:text-base text-neutral-800 break-words whitespace-pre-wrap">
                         {data?.instructions}
                     </p>
                     </div>

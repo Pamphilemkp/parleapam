@@ -24,40 +24,40 @@ export function PublicAgentCatalog() {
   };
 
   return (
-    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full max-w-full">
       {SAMPLE_AGENTS.map((agent) => (
-        <Card key={agent.id} className="flex flex-col h-full hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <div className="flex items-start justify-between mb-2">
-              <div className="text-4xl">{agent.icon}</div>
-              <div className="flex gap-2 flex-wrap">
+        <Card key={agent.id} className="flex flex-col h-full hover:shadow-lg transition-shadow w-full max-w-full">
+          <CardHeader className="p-3 sm:p-6">
+            <div className="flex items-start justify-between mb-2 gap-2">
+              <div className="text-3xl sm:text-4xl">{agent.icon}</div>
+              <div className="flex gap-1 sm:gap-2 flex-wrap">
                 {agent.tier === 'premium' && <PremiumBadge />}
                 {agent.hasWhiteboard && (
                   <Badge variant="outline" className="text-xs">
                     <Sparkles className="h-3 w-3 mr-1" />
-                    Whiteboard
+                    <span className="hidden sm:inline">Whiteboard</span>
                   </Badge>
                 )}
                 {agent.hasGestures && (
                   <Badge variant="outline" className="text-xs">
                     <Zap className="h-3 w-3 mr-1" />
-                    Gestures
+                    <span className="hidden sm:inline">Gestures</span>
                   </Badge>
                 )}
               </div>
             </div>
-            <CardTitle className="text-xl">{agent.name}</CardTitle>
-            <CardDescription className="line-clamp-2">
+            <CardTitle className="text-lg sm:text-xl break-words">{agent.name}</CardTitle>
+            <CardDescription className="line-clamp-2 text-sm">
               {agent.description}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 space-y-3">
+          <CardContent className="flex-1 space-y-2 sm:space-y-3 p-3 sm:p-6 pt-0">
             <div>
-              <p className="text-sm font-medium mb-1">Capabilities:</p>
-              <ul className="text-sm text-muted-foreground space-y-1">
+              <p className="text-xs sm:text-sm font-medium mb-1">Capabilities:</p>
+              <ul className="text-xs sm:text-sm text-muted-foreground space-y-1">
                 {agent.capabilities.slice(0, 3).map((cap, i) => (
-                  <li key={i} className="flex items-start">
-                    <span className="mr-2">•</span>
+                  <li key={i} className="flex items-start break-words">
+                    <span className="mr-2 flex-shrink-0">•</span>
                     <span>{cap}</span>
                   </li>
                 ))}
@@ -69,20 +69,22 @@ export function PublicAgentCatalog() {
               </ul>
             </div>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="p-3 sm:p-6 pt-0">
             <Button
               onClick={() => handleStartMeeting(agent.id, agent.tier === 'premium')}
-              className="w-full"
+              className="w-full touch-target min-h-[44px] text-sm sm:text-base"
               variant={agent.tier === 'free' ? "default" : "outline"}
             >
               {agent.tier === 'free' ? (
                 <>
-                  Start Free Meeting
+                  <span className="hidden sm:inline">Start Free Meeting</span>
+                  <span className="sm:hidden">Start Free</span>
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </>
               ) : (
                 <>
-                  Get Premium Access
+                  <span className="hidden sm:inline">Get Premium Access</span>
+                  <span className="sm:hidden">Get Premium</span>
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </>
               )}

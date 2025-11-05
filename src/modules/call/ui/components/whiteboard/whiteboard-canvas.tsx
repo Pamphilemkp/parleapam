@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { X, Download, Save } from 'lucide-react';
 import { usePremium } from '@/hooks/use-premium';
 import { useRouter } from 'next/navigation';
+import type { Call } from '@stream-io/video-react-sdk';
 
 export type DrawingTool = 'pen' | 'eraser' | 'rectangle' | 'circle' | 'line' | 'arrow' | 'text';
 export type WhiteboardState = {
@@ -18,13 +19,20 @@ export type WhiteboardState = {
   }>;
 };
 
+// Type for window extension with whiteboard sync function
+interface WindowWithWhiteboard {
+  __whiteboardSend?: (path: WhiteboardState['paths'][number] | null, action: 'path' | 'clear' | 'undo') => void;
+}
+
 interface WhiteboardCanvasProps {
   meetingId: string;
   onClose: () => void;
   onSave?: (data: WhiteboardState) => void;
+  demo?: boolean;
+  call?: Call;
 }
 
-export function WhiteboardCanvas({ meetingId, onClose, onSave }: WhiteboardCanvasProps) {
+export function WhiteboardCanvas({ meetingId, onClose, onSave, demo = false, call }: WhiteboardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentTool, setCurrentTool] = useState<DrawingTool>('pen');
@@ -35,6 +43,32 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave }: WhiteboardCanva
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
   const { isPremium } = usePremium();
   const router = useRouter();
+
+  // Real-time whiteboard sync using Stream app messages (placeholder for future implementation)
+  // Note: Stream Video SDK real-time sync requires additional setup with app messages or data channels
+  // For now, whiteboard state is saved to database and can be synced via polling or WebSocket
+  useEffect(() => {
+    if (!call || !isPremium) return;
+
+    // Placeholder for real-time sync - will be implemented with proper Stream SDK data channels
+    // For MVP, whiteboard syncs via database saves that other participants can poll
+    const sendPath = (path: WhiteboardState['paths'][number] | null, action: 'path' | 'clear' | 'undo') => {
+      // Real-time sync will be implemented with Stream SDK data channels in future update
+      // For now, state is persisted via onSave callback
+      if (onSave && action === 'path' && path) {
+        // Save state periodically
+        const currentState = { paths: [...paths, path] };
+        onSave(currentState);
+      }
+    };
+
+    // Store send function for use in handlers (for future sync implementation)
+    (window as WindowWithWhiteboard).__whiteboardSend = sendPath;
+
+    return () => {
+      delete (window as WindowWithWhiteboard).__whiteboardSend;
+    };
+  }, [call, isPremium, paths, onSave]);
 
   // Draw all paths on canvas
   const drawPaths = useCallback((ctx: CanvasRenderingContext2D, pathsToDraw: WhiteboardState['paths']) => {
@@ -120,6 +154,107 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave }: WhiteboardCanva
     }
   }, [paths, currentPath, drawPaths]);
 
+  // Rich branded demo sequence: comprehensive drawing showcase
+  useEffect(() => {
+    if (!demo) return;
+    let cancelled = false;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const canvasWidth = canvas.offsetWidth || 800;
+    const canvasHeight = canvas.offsetHeight || 600;
+    const centerX = canvasWidth / 2;
+    const centerY = canvasHeight / 2;
+
+    const addPath = (path: WhiteboardState['paths'][number], delay: number) => {
+      window.setTimeout(() => {
+        if (cancelled) return;
+        setPaths((prev) => [...prev, path]);
+      }, delay);
+    };
+
+    // Step 1: Title with brand colors
+    addPath({ 
+      tool: 'text', 
+      points: [{ x: centerX - 120, y: 50 }], 
+      color: '#0ea5e9', 
+      width: 4, 
+      text: 'Parle à Pam AI' 
+    }, 500);
+
+    // Step 2: Main concept box (branded)
+    addPath({ 
+      tool: 'rectangle', 
+      points: [{ x: centerX - 200, y: centerY - 100 }, { x: centerX + 200, y: centerY + 100 }], 
+      color: '#10b981', 
+      width: 4 
+    }, 1500);
+
+    // Step 3: Connecting arrows (flow diagram)
+    addPath({ 
+      tool: 'arrow', 
+      points: [{ x: centerX - 250, y: centerY - 150 }, { x: centerX - 200, y: centerY - 100 }], 
+      color: '#ef4444', 
+      width: 3 
+    }, 2300);
+    addPath({ 
+      tool: 'arrow', 
+      points: [{ x: centerX + 200, y: centerY }, { x: centerX + 250, y: centerY }], 
+      color: '#ef4444', 
+      width: 3 
+    }, 2800);
+
+    // Step 4: Process flow circle
+    addPath({ 
+      tool: 'circle', 
+      points: [{ x: centerX, y: centerY - 150 }, { x: centerX + 80, y: centerY - 150 }], 
+      color: '#8b5cf6', 
+      width: 3 
+    }, 3500);
+
+    // Step 5: Hand-drawn explanation curve
+    const curve: WhiteboardState['paths'][number] = { 
+      tool: 'pen', 
+      points: [], 
+      color: '#f59e0b', 
+      width: 3 
+    };
+    for (let i = 0; i < 30; i++) {
+      const t = i / 30;
+      const x = centerX - 150 + t * 300;
+      const y = centerY + 50 + Math.sin(t * Math.PI * 2) * 40;
+      curve.points.push({ x, y });
+    }
+    addPath(curve, 4200);
+
+    // Step 6: Text annotation
+    addPath({ 
+      tool: 'text', 
+      points: [{ x: centerX - 100, y: centerY + 120 }], 
+      color: '#6366f1', 
+      width: 3, 
+      text: 'Interactive Learning' 
+    }, 5200);
+
+    // Step 7: Additional diagram elements
+    addPath({ 
+      tool: 'line', 
+      points: [{ x: centerX - 150, y: centerY + 80 }, { x: centerX - 150, y: centerY + 150 }], 
+      color: '#06b6d4', 
+      width: 2 
+    }, 6000);
+    addPath({ 
+      tool: 'line', 
+      points: [{ x: centerX + 150, y: centerY + 80 }, { x: centerX + 150, y: centerY + 150 }], 
+      color: '#06b6d4', 
+      width: 2 
+    }, 6500);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [demo]);
+
   const getPointFromEvent = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
@@ -185,7 +320,15 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave }: WhiteboardCanva
   const handleEnd = () => {
     if (!isDrawing || !currentPath) return;
 
-    setPaths([...paths, currentPath]);
+    const newPaths = [...paths, currentPath];
+    setPaths(newPaths);
+    
+    // Sync to other participants
+    const sendFn = (window as WindowWithWhiteboard).__whiteboardSend;
+    if (call && sendFn) {
+      sendFn(currentPath, 'path');
+    }
+    
     setCurrentPath(null);
     setIsDrawing(false);
     setStartPoint(null);
@@ -193,11 +336,23 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave }: WhiteboardCanva
 
   const handleUndo = () => {
     setPaths(paths.slice(0, -1));
+    
+    // Sync undo to other participants
+    const sendFn = (window as WindowWithWhiteboard).__whiteboardSend;
+    if (call && sendFn) {
+      sendFn(null, 'undo');
+    }
   };
 
   const handleClear = () => {
     setPaths([]);
     setCurrentPath(null);
+    
+    // Sync clear to other participants
+    const sendFn = (window as WindowWithWhiteboard).__whiteboardSend;
+    if (call && sendFn) {
+      sendFn(null, 'clear');
+    }
   };
 
   const handleExport = () => {
@@ -238,40 +393,42 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave }: WhiteboardCanva
   }
 
   return (
-    <div className="absolute inset-0 bg-background z-50 flex flex-col">
+    <div className="absolute inset-0 bg-background z-50 flex flex-col w-full h-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <h2 className="text-lg font-semibold">Whiteboard</h2>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
+      <div className="flex items-center justify-between p-2 sm:p-4 border-b flex-shrink-0">
+        <h2 className="text-base sm:text-lg font-semibold truncate">Whiteboard</h2>
+        <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+          <Button variant="outline" size="sm" onClick={handleExport} className="min-w-[44px] min-h-[44px] text-xs sm:text-sm">
+            <Download className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Export</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={handleSave}>
-            <Save className="h-4 w-4 mr-2" />
-            Save
+          <Button variant="outline" size="sm" onClick={handleSave} className="min-w-[44px] min-h-[44px] text-xs sm:text-sm">
+            <Save className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Save</span>
           </Button>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button variant="ghost" size="sm" onClick={onClose} className="min-w-[44px] min-h-[44px]">
             <X className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {/* Toolbar */}
-      <WhiteboardToolbar
-        currentTool={currentTool}
-        currentColor={currentColor}
-        lineWidth={lineWidth}
-        onToolChange={setCurrentTool}
-        onColorChange={setCurrentColor}
-        onWidthChange={setLineWidth}
-        onUndo={handleUndo}
-        onClear={handleClear}
-        canUndo={paths.length > 0}
-      />
+      <div className="flex-shrink-0">
+        <WhiteboardToolbar
+          currentTool={currentTool}
+          currentColor={currentColor}
+          lineWidth={lineWidth}
+          onToolChange={setCurrentTool}
+          onColorChange={setCurrentColor}
+          onWidthChange={setLineWidth}
+          onUndo={handleUndo}
+          onClear={handleClear}
+          canUndo={paths.length > 0}
+        />
+      </div>
 
       {/* Canvas */}
-      <div className="flex-1 relative overflow-hidden">
+      <div className="flex-1 relative overflow-hidden min-h-0 w-full">
         <canvas
           ref={canvasRef}
           className="absolute inset-0 w-full h-full cursor-crosshair touch-none"
@@ -280,7 +437,10 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave }: WhiteboardCanva
           onMouseUp={handleEnd}
           onMouseLeave={handleEnd}
           onTouchStart={handleStart}
-          onTouchMove={handleMove}
+          onTouchMove={(e) => {
+            e.preventDefault();
+            handleMove(e);
+          }}
           onTouchEnd={handleEnd}
         />
       </div>

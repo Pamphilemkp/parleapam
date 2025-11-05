@@ -30,7 +30,7 @@ if (error) {
 }
 
   return (
-    <div className="flex-1 pb-4 px-4 md:px-8 flex flex-col gap-y-4">
+    <div className="flex-1 pb-4 px-2 sm:px-4 md:px-8 flex flex-col gap-y-4 w-full max-w-full overflow-x-hidden">
        
         <DataTable 
             data={data?.items ?? []} 

@@ -134,6 +134,60 @@
   }
 }
 
+/* Mobile-first responsive base styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+}
+
+/* Prevent horizontal scrolling on mobile */
+@media (max-width: 768px) {
+  * {
+    max-width: 100vw;
+  }
+  
+  body {
+    overflow-x: hidden;
+    width: 100vw;
+    max-width: 100vw;
+    position: relative;
+  }
+  
+  html {
+    overflow-x: hidden;
+    width: 100vw;
+    max-width: 100vw;
+  }
+  
+  main, section, div[class*="container"], div[class*="Container"] {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
+  /* Ensure all flex containers don't overflow */
+  [class*="flex"] {
+    min-width: 0;
+  }
+  
+  /* Prevent text from causing overflow */
+  p, h1, h2, h3, h4, h5, h6, span, div {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+}
+
 /* Responsive utilities */
 @layer utilities {
   /* Fluid typography */
@@ -155,18 +209,32 @@
     min-height: 44px;
   }
   
+  /* Mobile-safe spacing */
+  .mobile-safe-px {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+  
+  .mobile-safe-py {
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
   /* Responsive container */
   .container-responsive {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: clamp(0.75rem, 2vw, 1rem);
+    padding-right: clamp(0.75rem, 2vw, 1rem);
+    max-width: 100vw;
   }
   
   @media (min-width: 640px) {
     .container-responsive {
       max-width: 640px;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
     }
   }
   
@@ -186,5 +254,16 @@
     .container-responsive {
       max-width: 1280px;
     }
+  }
+  
+  /* Mobile-safe viewport units */
+  .h-screen-mobile {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile */
+  }
+  
+  .w-screen-mobile {
+    width: 100vw;
+    max-width: 100vw;
   }
 }
