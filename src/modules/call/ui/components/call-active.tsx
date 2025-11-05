@@ -63,12 +63,31 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
         return () => window.removeEventListener('keydown', onKey);
     }, [showWhiteboard]);
 
-    // Simple AI demo: auto-open whiteboard and show avatar gesturing
+    // AI demo: auto-open whiteboard, show avatar gesturing, and trigger AI drawing
     const triggerAIDemo = () => {
         setIsAIDemoActive(true);
         if (!showWhiteboard) setShowWhiteboard(true);
-        // Stop demo after 12s
-        window.setTimeout(() => setIsAIDemoActive(false), 12000);
+        
+        // Trigger AI drawing commands sequentially to demonstrate AI using whiteboard
+        const commands = [
+            'draw a circle',
+            'draw a rectangle',
+            'draw a line',
+            'write Hello, this is AI demonstrating',
+            'draw a diagram',
+        ];
+        
+        commands.forEach((cmd, index) => {
+            window.setTimeout(() => {
+                const event = new CustomEvent('ai-whiteboard-command', {
+                    detail: { command: cmd }
+                });
+                window.dispatchEvent(event);
+            }, 2000 + index * 2500); // Stagger commands
+        });
+        
+        // Stop demo after all commands execute
+        window.setTimeout(() => setIsAIDemoActive(false), 2000 + commands.length * 2500 + 2000);
     };
 
     return (
@@ -128,12 +147,23 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
 
             {/* Whiteboard Overlay */}
             {showWhiteboard && (
-                <div className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm flex p-2 sm:p-4">
-                    <div className="relative m-auto w-full max-w-full h-full sm:h-[75vh] sm:max-h-[90vh] bg-background rounded-xl shadow-2xl overflow-hidden flex flex-col">
-                        <div className="absolute top-2 right-2 flex gap-2 z-10">
-                            <Button size="sm" variant="ghost" onClick={() => setShowWhiteboard(false)} title="Close Whiteboard" className="min-w-[44px] min-h-[44px]">
-                                <X className="h-4 w-4" />
+                <div className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm flex p-2 sm:p-4">
+                    <div className="relative m-auto w-full max-w-full h-full sm:h-[75vh] sm:max-h-[90vh] bg-background rounded-xl shadow-2xl overflow-hidden flex flex-col border-2 border-primary/20">
+                        {/* Close button - prominently displayed */}
+                        <div className="absolute top-2 right-2 sm:top-4 sm:right-4 flex gap-2 z-50">
+                            <Button 
+                                size="sm" 
+                                variant="destructive" 
+                                onClick={() => setShowWhiteboard(false)} 
+                                title="Close Whiteboard (ESC)" 
+                                className="min-w-[44px] min-h-[44px] shadow-lg"
+                            >
+                                <X className="h-4 w-4 sm:h-5 sm:w-5" />
                             </Button>
+                        </div>
+                        {/* ESC hint text */}
+                        <div className="absolute top-2 left-2 sm:top-4 sm:left-4 z-50 bg-background/90 px-2 py-1 rounded text-xs sm:text-sm text-muted-foreground">
+                            Press ESC to close
                         </div>
                         <WhiteboardCanvas
                             meetingId={meetingId}
@@ -141,6 +171,7 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
                             onSave={handleSaveWhiteboard}
                             demo={isAIDemoActive}
                             call={call}
+                            agentId={agentId}
                         />
                     </div>
                 </div>
