@@ -6,6 +6,7 @@ import { ArrowRight, Play, Sparkles, Zap, MessageSquare, Video, BarChart3 } from
 import { motion } from 'framer-motion';
 // import Image from 'next/image';
 import { PublicAgentCatalog } from '../components/public-agent-catalog';
+import { PremiumDemoModal } from '../components/premium-demo-modal';
 
 export default function ModernHomeView() {
   return (
@@ -42,12 +43,7 @@ export default function ModernHomeView() {
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-                <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6">
-                  <Link href="#demo">
-                    <Play className="mr-2 h-5 w-5" />
-                    Watch Demo
-                  </Link>
-                </Button>
+                <PremiumDemoModal />
               </div>
               
               <p className="text-sm text-muted-foreground mt-6">

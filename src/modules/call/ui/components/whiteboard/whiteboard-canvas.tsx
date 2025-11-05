@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { X, Download, Save } from 'lucide-react';
 import { usePremium } from '@/hooks/use-premium';
 import { useRouter } from 'next/navigation';
+import type { Call } from '@stream-io/video-react-sdk';
 
 export type DrawingTool = 'pen' | 'eraser' | 'rectangle' | 'circle' | 'line' | 'arrow' | 'text';
 export type WhiteboardState = {
@@ -22,9 +23,11 @@ interface WhiteboardCanvasProps {
   meetingId: string;
   onClose: () => void;
   onSave?: (data: WhiteboardState) => void;
+  demo?: boolean;
+  call?: Call;
 }
 
-export function WhiteboardCanvas({ meetingId, onClose, onSave }: WhiteboardCanvasProps) {
+export function WhiteboardCanvas({ meetingId, onClose, onSave, demo = false, call }: WhiteboardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentTool, setCurrentTool] = useState<DrawingTool>('pen');
@@ -35,6 +38,69 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave }: WhiteboardCanva
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
   const { isPremium } = usePremium();
   const router = useRouter();
+  const syncRef = useRef(false);
+
+  // Real-time whiteboard sync using Stream custom events
+  useEffect(() => {
+    if (!call || !isPremium) return;
+    
+    // Listen for incoming whiteboard updates via custom events
+    const handleCustomEvent = (event: { type: string; custom: Record<string, unknown> }) => {
+      try {
+        if (event.type === 'whiteboard-update' && event.custom) {
+          const data = event.custom;
+          const userId = data.userId as string;
+          
+          // Ignore own messages
+          if (userId === call.currentUserId) return;
+          
+          if (data.action === 'path' && data.path) {
+            setPaths(prev => [...prev, data.path as WhiteboardState['paths'][number]]);
+          } else if (data.action === 'clear') {
+            setPaths([]);
+          } else if (data.action === 'undo') {
+            setPaths(prev => prev.slice(0, -1));
+          }
+        }
+      } catch (err) {
+        console.error('Error parsing whiteboard sync message:', err);
+      }
+    };
+
+    // Send whiteboard updates via custom events
+    const sendPath = (path: WhiteboardState['paths'][number] | null, action: 'path' | 'clear' | 'undo') => {
+      if (!call || syncRef.current) return;
+      
+      try {
+        syncRef.current = true;
+        call.publishCustomEvent({
+          type: 'whiteboard-update',
+          custom: {
+            action,
+            path,
+            userId: call.currentUserId,
+            timestamp: Date.now(),
+          },
+        });
+        // Reset sync flag after a short delay
+        setTimeout(() => { syncRef.current = false; }, 50);
+      } catch (err) {
+        console.error('Error sending whiteboard sync:', err);
+        syncRef.current = false;
+      }
+    };
+
+    // Subscribe to custom events
+    call.on('event.custom', handleCustomEvent);
+
+    // Store send function for use in handlers
+    (window as any).__whiteboardSend = sendPath;
+
+    return () => {
+      call.off('event.custom', handleCustomEvent);
+      delete (window as any).__whiteboardSend;
+    };
+  }, [call, isPremium]);
 
   // Draw all paths on canvas
   const drawPaths = useCallback((ctx: CanvasRenderingContext2D, pathsToDraw: WhiteboardState['paths']) => {
@@ -120,6 +186,107 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave }: WhiteboardCanva
     }
   }, [paths, currentPath, drawPaths]);
 
+  // Rich branded demo sequence: comprehensive drawing showcase
+  useEffect(() => {
+    if (!demo) return;
+    let cancelled = false;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const canvasWidth = canvas.offsetWidth || 800;
+    const canvasHeight = canvas.offsetHeight || 600;
+    const centerX = canvasWidth / 2;
+    const centerY = canvasHeight / 2;
+
+    const addPath = (path: WhiteboardState['paths'][number], delay: number) => {
+      window.setTimeout(() => {
+        if (cancelled) return;
+        setPaths((prev) => [...prev, path]);
+      }, delay);
+    };
+
+    // Step 1: Title with brand colors
+    addPath({ 
+      tool: 'text', 
+      points: [{ x: centerX - 120, y: 50 }], 
+      color: '#0ea5e9', 
+      width: 4, 
+      text: 'Parle à Pam AI' 
+    }, 500);
+
+    // Step 2: Main concept box (branded)
+    addPath({ 
+      tool: 'rectangle', 
+      points: [{ x: centerX - 200, y: centerY - 100 }, { x: centerX + 200, y: centerY + 100 }], 
+      color: '#10b981', 
+      width: 4 
+    }, 1500);
+
+    // Step 3: Connecting arrows (flow diagram)
+    addPath({ 
+      tool: 'arrow', 
+      points: [{ x: centerX - 250, y: centerY - 150 }, { x: centerX - 200, y: centerY - 100 }], 
+      color: '#ef4444', 
+      width: 3 
+    }, 2300);
+    addPath({ 
+      tool: 'arrow', 
+      points: [{ x: centerX + 200, y: centerY }, { x: centerX + 250, y: centerY }], 
+      color: '#ef4444', 
+      width: 3 
+    }, 2800);
+
+    // Step 4: Process flow circle
+    addPath({ 
+      tool: 'circle', 
+      points: [{ x: centerX, y: centerY - 150 }, { x: centerX + 80, y: centerY - 150 }], 
+      color: '#8b5cf6', 
+      width: 3 
+    }, 3500);
+
+    // Step 5: Hand-drawn explanation curve
+    const curve: WhiteboardState['paths'][number] = { 
+      tool: 'pen', 
+      points: [], 
+      color: '#f59e0b', 
+      width: 3 
+    };
+    for (let i = 0; i < 30; i++) {
+      const t = i / 30;
+      const x = centerX - 150 + t * 300;
+      const y = centerY + 50 + Math.sin(t * Math.PI * 2) * 40;
+      curve.points.push({ x, y });
+    }
+    addPath(curve, 4200);
+
+    // Step 6: Text annotation
+    addPath({ 
+      tool: 'text', 
+      points: [{ x: centerX - 100, y: centerY + 120 }], 
+      color: '#6366f1', 
+      width: 3, 
+      text: 'Interactive Learning' 
+    }, 5200);
+
+    // Step 7: Additional diagram elements
+    addPath({ 
+      tool: 'line', 
+      points: [{ x: centerX - 150, y: centerY + 80 }, { x: centerX - 150, y: centerY + 150 }], 
+      color: '#06b6d4', 
+      width: 2 
+    }, 6000);
+    addPath({ 
+      tool: 'line', 
+      points: [{ x: centerX + 150, y: centerY + 80 }, { x: centerX + 150, y: centerY + 150 }], 
+      color: '#06b6d4', 
+      width: 2 
+    }, 6500);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [demo]);
+
   const getPointFromEvent = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
@@ -185,7 +352,14 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave }: WhiteboardCanva
   const handleEnd = () => {
     if (!isDrawing || !currentPath) return;
 
-    setPaths([...paths, currentPath]);
+    const newPaths = [...paths, currentPath];
+    setPaths(newPaths);
+    
+    // Sync to other participants
+    if (call && (window as any).__whiteboardSend) {
+      (window as any).__whiteboardSend(currentPath, 'path');
+    }
+    
     setCurrentPath(null);
     setIsDrawing(false);
     setStartPoint(null);
@@ -193,11 +367,21 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave }: WhiteboardCanva
 
   const handleUndo = () => {
     setPaths(paths.slice(0, -1));
+    
+    // Sync undo to other participants
+    if (call && (window as any).__whiteboardSend) {
+      (window as any).__whiteboardSend(null, 'undo');
+    }
   };
 
   const handleClear = () => {
     setPaths([]);
     setCurrentPath(null);
+    
+    // Sync clear to other participants
+    if (call && (window as any).__whiteboardSend) {
+      (window as any).__whiteboardSend(null, 'clear');
+    }
   };
 
   const handleExport = () => {
