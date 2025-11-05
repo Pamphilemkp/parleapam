@@ -22,6 +22,7 @@ export type WhiteboardState = {
 // Type for window extension with whiteboard sync function
 interface WindowWithWhiteboard {
   __whiteboardSend?: (path: WhiteboardState['paths'][number] | null, action: 'path' | 'clear' | 'undo') => void;
+  __aiDraw?: (command: string) => void;
 }
 
 interface WhiteboardCanvasProps {
@@ -30,9 +31,10 @@ interface WhiteboardCanvasProps {
   onSave?: (data: WhiteboardState) => void;
   demo?: boolean;
   call?: Call;
+  agentId?: string;
 }
 
-export function WhiteboardCanvas({ meetingId, onClose, onSave, demo = false, call }: WhiteboardCanvasProps) {
+export function WhiteboardCanvas({ meetingId, onClose, onSave, demo = false, call, agentId }: WhiteboardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentTool, setCurrentTool] = useState<DrawingTool>('pen');
@@ -43,7 +45,160 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave, demo = false, cal
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
   const { isPremium } = usePremium();
   const router = useRouter();
-
+  
+  // AI-driven whiteboard command parser and executor
+  const executeAIDrawingCommand = useCallback((command: string) => {
+    if (!isPremium || !canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const canvasWidth = canvas.offsetWidth || 800;
+    const canvasHeight = canvas.offsetHeight || 600;
+    const centerX = canvasWidth / 2;
+    const centerY = canvasHeight / 2;
+    
+    const cmd = command.toLowerCase().trim();
+    
+    // Parse drawing commands
+    // Draw circle
+    if (cmd.includes('circle') || cmd.includes('draw a circle')) {
+      const radius = cmd.match(/\d+/)?.[0] ? parseInt(cmd.match(/\d+/)?.[0] || '50') : 50;
+      const newPath: WhiteboardState['paths'][number] = {
+        tool: 'circle',
+        points: [
+          { x: centerX - radius, y: centerY },
+          { x: centerX + radius, y: centerY }
+        ],
+        color: currentColor,
+        width: lineWidth,
+      };
+      setPaths(prev => [...prev, newPath]);
+      return;
+    }
+    
+    // Draw rectangle
+    if (cmd.includes('rectangle') || cmd.includes('square') || cmd.includes('box')) {
+      const size = cmd.match(/\d+/)?.[0] ? parseInt(cmd.match(/\d+/)?.[0] || '100') : 100;
+      const newPath: WhiteboardState['paths'][number] = {
+        tool: 'rectangle',
+        points: [
+          { x: centerX - size/2, y: centerY - size/2 },
+          { x: centerX + size/2, y: centerY + size/2 }
+        ],
+        color: currentColor,
+        width: lineWidth,
+      };
+      setPaths(prev => [...prev, newPath]);
+      return;
+    }
+    
+    // Draw line
+    if (cmd.includes('line') || cmd.includes('draw a line')) {
+      const newPath: WhiteboardState['paths'][number] = {
+        tool: 'line',
+        points: [
+          { x: centerX - 100, y: centerY },
+          { x: centerX + 100, y: centerY }
+        ],
+        color: currentColor,
+        width: lineWidth,
+      };
+      setPaths(prev => [...prev, newPath]);
+      return;
+    }
+    
+    // Draw arrow
+    if (cmd.includes('arrow') || cmd.includes('point to')) {
+      const newPath: WhiteboardState['paths'][number] = {
+        tool: 'arrow',
+        points: [
+          { x: centerX - 100, y: centerY },
+          { x: centerX + 100, y: centerY }
+        ],
+        color: currentColor,
+        width: lineWidth,
+      };
+      setPaths(prev => [...prev, newPath]);
+      return;
+    }
+    
+    // Write text
+    if (cmd.includes('write') || cmd.includes('text') || cmd.includes('say')) {
+      const textMatch = cmd.match(/(?:write|text|say)\s+(.+)/);
+      const text = textMatch?.[1] || 'AI Note';
+      const newPath: WhiteboardState['paths'][number] = {
+        tool: 'text',
+        points: [{ x: centerX - 100, y: centerY }],
+        color: currentColor,
+        width: lineWidth,
+        text: text.substring(0, 50), // Limit text length
+      };
+      setPaths(prev => [...prev, newPath]);
+      return;
+    }
+    
+    // Clear whiteboard
+    if (cmd.includes('clear') || cmd.includes('erase all') || cmd.includes('clean')) {
+      setPaths([]);
+      setCurrentPath(null);
+      return;
+    }
+    
+    // Draw diagram (flowchart)
+    if (cmd.includes('diagram') || cmd.includes('flowchart') || cmd.includes('process')) {
+      // Draw a simple flowchart
+      const box1: WhiteboardState['paths'][number] = {
+        tool: 'rectangle',
+        points: [
+          { x: centerX - 150, y: centerY - 100 },
+          { x: centerX - 50, y: centerY - 50 }
+        ],
+        color: '#0ea5e9',
+        width: 3,
+      };
+      const arrow1: WhiteboardState['paths'][number] = {
+        tool: 'arrow',
+        points: [
+          { x: centerX - 50, y: centerY - 75 },
+          { x: centerX + 50, y: centerY - 75 }
+        ],
+        color: '#ef4444',
+        width: 3,
+      };
+      const box2: WhiteboardState['paths'][number] = {
+        tool: 'rectangle',
+        points: [
+          { x: centerX + 50, y: centerY - 100 },
+          { x: centerX + 150, y: centerY - 50 }
+        ],
+        color: '#10b981',
+        width: 3,
+      };
+      setPaths(prev => [...prev, box1, arrow1, box2]);
+      return;
+    }
+  }, [isPremium, currentColor, lineWidth]);
+  
+  // Listen for AI commands via window events
+  // Note: Real-time transcript listening can be added when Stream SDK provides transcript events
+  useEffect(() => {
+    if (!isPremium || !agentId) return;
+    
+    // Listen via window for AI command injection
+    // This can be triggered by:
+    // 1. Manual demo commands
+    // 2. Transcript parsing (when Stream SDK transcript events are available)
+    // 3. External integrations
+    const handleWindowCommand = (e: CustomEvent<{ command: string }>) => {
+      executeAIDrawingCommand(e.detail.command);
+    };
+    
+    window.addEventListener('ai-whiteboard-command', handleWindowCommand as EventListener);
+    
+    return () => {
+      window.removeEventListener('ai-whiteboard-command', handleWindowCommand as EventListener);
+    };
+  }, [isPremium, agentId, executeAIDrawingCommand]);
+  
   // Real-time whiteboard sync using Stream app messages (placeholder for future implementation)
   // Note: Stream Video SDK real-time sync requires additional setup with app messages or data channels
   // For now, whiteboard state is saved to database and can be synced via polling or WebSocket
@@ -64,11 +219,15 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave, demo = false, cal
 
     // Store send function for use in handlers (for future sync implementation)
     (window as WindowWithWhiteboard).__whiteboardSend = sendPath;
+    
+    // Store AI command executor for external access
+    (window as WindowWithWhiteboard).__aiDraw = executeAIDrawingCommand;
 
     return () => {
       delete (window as WindowWithWhiteboard).__whiteboardSend;
+      delete (window as WindowWithWhiteboard).__aiDraw;
     };
-  }, [call, isPremium, paths, onSave]);
+  }, [call, isPremium, paths, onSave, executeAIDrawingCommand]);
 
   // Draw all paths on canvas
   const drawPaths = useCallback((ctx: CanvasRenderingContext2D, pathsToDraw: WhiteboardState['paths']) => {

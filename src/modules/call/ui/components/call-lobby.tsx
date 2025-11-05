@@ -66,14 +66,16 @@ export const CallLobby = ({ onJoin }: Props) => {
                             Make sure your camera and microphone are working.
                         </p>
                     </div>
-                    <div className="w-full aspect-video max-h-[40vh] sm:max-h-none">
-                        <VideoPreview
-                           DisabledVideoPreview={
-                             hasBrowserMediaPermission ?
-                               disabledVideoPreview :
-                                AllowBrowserPermissions
-                           }
-                        />
+                    <div className="w-full aspect-video max-h-[40vh] sm:max-h-none overflow-hidden rounded-lg bg-muted">
+                        <div className="w-full h-full flex items-center justify-center">
+                            <VideoPreview
+                               DisabledVideoPreview={
+                                 hasBrowserMediaPermission ?
+                                   disabledVideoPreview :
+                                    AllowBrowserPermissions
+                               }
+                            />
+                        </div>
                     </div>
                     <div className="flex gap-x-2 w-full justify-center">
                        <ToggleAudioPreviewButton />
