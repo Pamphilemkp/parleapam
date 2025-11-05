@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { CallControls, SpeakerLayout, useCall, useParticipants } from '@stream-io/video-react-sdk';
+import { CallControls, SpeakerLayout, useCall, useCallStateHooks } from '@stream-io/video-react-sdk';
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { WhiteboardCanvas } from './whiteboard/whiteboard-canvas';
@@ -20,6 +20,7 @@ interface Props {
 
 export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) => {
     const call = useCall();
+    const { useParticipants } = useCallStateHooks();
     const participants = useParticipants();
     const [showWhiteboard, setShowWhiteboard] = useState(false);
     const { isPremium } = usePremium();
@@ -29,7 +30,7 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
 
     // Detect when AI agent is speaking (audio level detection)
     useEffect(() => {
-        if (!call || !agentId) return;
+        if (!call || !agentId || !participants) return;
 
         const agentParticipant = participants.find(p => p.userId === agentId || p.userId?.includes('agent'));
         
@@ -37,8 +38,9 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
 
         // Monitor audio level to detect speech
         const checkAudio = () => {
-            const hasAudio = agentParticipant.audioStream && agentParticipant.isSpeaking;
-            setIsAgentSpeaking(hasAudio || false);
+            // Check if participant has audio track and is currently speaking
+            const hasAudio = agentParticipant.isSpeaking || false;
+            setIsAgentSpeaking(hasAudio);
         };
 
         const interval = setInterval(checkAudio, 100);
@@ -70,9 +72,9 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
     };
 
     return (
-        <div className="flex flex-col justify-between h-dvh sm:h-full p-2 sm:p-4 text-white relative">
+        <div className="flex flex-col justify-between h-screen-mobile p-2 sm:p-4 text-white relative overflow-hidden w-full max-w-full">
             {/* Header - Responsive */}
-            <div className="bg-[#101213] rounded-full flex items-center gap-2 sm:gap-4 px-2 sm:px-4 py-2 sticky top-[env(safe-area-inset-top)] z-20">
+            <div className="bg-[#101213] rounded-full flex items-center gap-2 sm:gap-4 px-2 sm:px-4 py-2 sticky top-0 sm:top-[env(safe-area-inset-top)] z-20 w-full max-w-full flex-shrink-0">
                <Link href="/" className="flex items-center justify-center p-1 bg-white/10 rounded-full w-fit min-w-[44px] min-h-[44px]">
                    <Image src="/logo.svg" alt="Logo" width={22} height={22} className="rounded-full" />
                </Link>
@@ -103,11 +105,13 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
             </div>
 
             {/* Speaker Layout with Avatar */}
-            <div className="flex-1 relative min-h-0">
-                <SpeakerLayout />
+            <div className="flex-1 relative min-h-0 w-full max-w-full overflow-hidden">
+                <div className="w-full h-full">
+                    <SpeakerLayout />
+                </div>
                 {/* Avatar Animation Overlay (Premium only) */}
                 {isPremium && agentId && (
-                    <div className="absolute top-4 right-4 z-10">
+                    <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10">
                         <AvatarAnimated
                             name="AI Agent"
                             isPremium={isPremium}
@@ -118,14 +122,14 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
             </div>
 
             {/* Controls - Responsive */}
-            <div className="bg-[#101213] rounded-full px-2 sm:px-4 py-2 flex items-center justify-center sticky bottom-[env(safe-area-inset-bottom)]">
+            <div className="bg-[#101213] rounded-full px-2 sm:px-4 py-2 flex items-center justify-center sticky bottom-0 sm:bottom-[env(safe-area-inset-bottom)] z-20 w-full max-w-full flex-shrink-0">
                 <CallControls onLeave={onLeave} />
             </div>
 
             {/* Whiteboard Overlay */}
             {showWhiteboard && (
-                <div className="absolute inset-0 z-30 bg-black/40 backdrop-blur-sm flex">
-                    <div className="relative m-auto w-[98vw] sm:w-[90vw] h-[70vh] sm:h-[75vh] bg-background rounded-xl shadow-2xl overflow-hidden">
+                <div className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm flex p-2 sm:p-4">
+                    <div className="relative m-auto w-full max-w-full h-full sm:h-[75vh] sm:max-h-[90vh] bg-background rounded-xl shadow-2xl overflow-hidden flex flex-col">
                         <div className="absolute top-2 right-2 flex gap-2 z-10">
                             <Button size="sm" variant="ghost" onClick={() => setShowWhiteboard(false)} title="Close Whiteboard" className="min-w-[44px] min-h-[44px]">
                                 <X className="h-4 w-4" />

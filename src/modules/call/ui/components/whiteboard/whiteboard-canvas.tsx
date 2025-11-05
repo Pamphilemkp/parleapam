@@ -19,6 +19,11 @@ export type WhiteboardState = {
   }>;
 };
 
+// Type for window extension with whiteboard sync function
+interface WindowWithWhiteboard {
+  __whiteboardSend?: (path: WhiteboardState['paths'][number] | null, action: 'path' | 'clear' | 'undo') => void;
+}
+
 interface WhiteboardCanvasProps {
   meetingId: string;
   onClose: () => void;
@@ -38,69 +43,32 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave, demo = false, cal
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
   const { isPremium } = usePremium();
   const router = useRouter();
-  const syncRef = useRef(false);
 
-  // Real-time whiteboard sync using Stream custom events
+  // Real-time whiteboard sync using Stream app messages (placeholder for future implementation)
+  // Note: Stream Video SDK real-time sync requires additional setup with app messages or data channels
+  // For now, whiteboard state is saved to database and can be synced via polling or WebSocket
   useEffect(() => {
     if (!call || !isPremium) return;
-    
-    // Listen for incoming whiteboard updates via custom events
-    const handleCustomEvent = (event: { type: string; custom: Record<string, unknown> }) => {
-      try {
-        if (event.type === 'whiteboard-update' && event.custom) {
-          const data = event.custom;
-          const userId = data.userId as string;
-          
-          // Ignore own messages
-          if (userId === call.currentUserId) return;
-          
-          if (data.action === 'path' && data.path) {
-            setPaths(prev => [...prev, data.path as WhiteboardState['paths'][number]]);
-          } else if (data.action === 'clear') {
-            setPaths([]);
-          } else if (data.action === 'undo') {
-            setPaths(prev => prev.slice(0, -1));
-          }
-        }
-      } catch (err) {
-        console.error('Error parsing whiteboard sync message:', err);
-      }
-    };
 
-    // Send whiteboard updates via custom events
+    // Placeholder for real-time sync - will be implemented with proper Stream SDK data channels
+    // For MVP, whiteboard syncs via database saves that other participants can poll
     const sendPath = (path: WhiteboardState['paths'][number] | null, action: 'path' | 'clear' | 'undo') => {
-      if (!call || syncRef.current) return;
-      
-      try {
-        syncRef.current = true;
-        call.publishCustomEvent({
-          type: 'whiteboard-update',
-          custom: {
-            action,
-            path,
-            userId: call.currentUserId,
-            timestamp: Date.now(),
-          },
-        });
-        // Reset sync flag after a short delay
-        setTimeout(() => { syncRef.current = false; }, 50);
-      } catch (err) {
-        console.error('Error sending whiteboard sync:', err);
-        syncRef.current = false;
+      // Real-time sync will be implemented with Stream SDK data channels in future update
+      // For now, state is persisted via onSave callback
+      if (onSave && action === 'path' && path) {
+        // Save state periodically
+        const currentState = { paths: [...paths, path] };
+        onSave(currentState);
       }
     };
 
-    // Subscribe to custom events
-    call.on('event.custom', handleCustomEvent);
-
-    // Store send function for use in handlers
-    (window as any).__whiteboardSend = sendPath;
+    // Store send function for use in handlers (for future sync implementation)
+    (window as WindowWithWhiteboard).__whiteboardSend = sendPath;
 
     return () => {
-      call.off('event.custom', handleCustomEvent);
-      delete (window as any).__whiteboardSend;
+      delete (window as WindowWithWhiteboard).__whiteboardSend;
     };
-  }, [call, isPremium]);
+  }, [call, isPremium, paths, onSave]);
 
   // Draw all paths on canvas
   const drawPaths = useCallback((ctx: CanvasRenderingContext2D, pathsToDraw: WhiteboardState['paths']) => {
@@ -356,8 +324,9 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave, demo = false, cal
     setPaths(newPaths);
     
     // Sync to other participants
-    if (call && (window as any).__whiteboardSend) {
-      (window as any).__whiteboardSend(currentPath, 'path');
+    const sendFn = (window as WindowWithWhiteboard).__whiteboardSend;
+    if (call && sendFn) {
+      sendFn(currentPath, 'path');
     }
     
     setCurrentPath(null);
@@ -369,8 +338,9 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave, demo = false, cal
     setPaths(paths.slice(0, -1));
     
     // Sync undo to other participants
-    if (call && (window as any).__whiteboardSend) {
-      (window as any).__whiteboardSend(null, 'undo');
+    const sendFn = (window as WindowWithWhiteboard).__whiteboardSend;
+    if (call && sendFn) {
+      sendFn(null, 'undo');
     }
   };
 
@@ -379,8 +349,9 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave, demo = false, cal
     setCurrentPath(null);
     
     // Sync clear to other participants
-    if (call && (window as any).__whiteboardSend) {
-      (window as any).__whiteboardSend(null, 'clear');
+    const sendFn = (window as WindowWithWhiteboard).__whiteboardSend;
+    if (call && sendFn) {
+      sendFn(null, 'clear');
     }
   };
 
@@ -422,40 +393,42 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave, demo = false, cal
   }
 
   return (
-    <div className="absolute inset-0 bg-background z-50 flex flex-col">
+    <div className="absolute inset-0 bg-background z-50 flex flex-col w-full h-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <h2 className="text-lg font-semibold">Whiteboard</h2>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
+      <div className="flex items-center justify-between p-2 sm:p-4 border-b flex-shrink-0">
+        <h2 className="text-base sm:text-lg font-semibold truncate">Whiteboard</h2>
+        <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+          <Button variant="outline" size="sm" onClick={handleExport} className="min-w-[44px] min-h-[44px] text-xs sm:text-sm">
+            <Download className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Export</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={handleSave}>
-            <Save className="h-4 w-4 mr-2" />
-            Save
+          <Button variant="outline" size="sm" onClick={handleSave} className="min-w-[44px] min-h-[44px] text-xs sm:text-sm">
+            <Save className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Save</span>
           </Button>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button variant="ghost" size="sm" onClick={onClose} className="min-w-[44px] min-h-[44px]">
             <X className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {/* Toolbar */}
-      <WhiteboardToolbar
-        currentTool={currentTool}
-        currentColor={currentColor}
-        lineWidth={lineWidth}
-        onToolChange={setCurrentTool}
-        onColorChange={setCurrentColor}
-        onWidthChange={setLineWidth}
-        onUndo={handleUndo}
-        onClear={handleClear}
-        canUndo={paths.length > 0}
-      />
+      <div className="flex-shrink-0">
+        <WhiteboardToolbar
+          currentTool={currentTool}
+          currentColor={currentColor}
+          lineWidth={lineWidth}
+          onToolChange={setCurrentTool}
+          onColorChange={setCurrentColor}
+          onWidthChange={setLineWidth}
+          onUndo={handleUndo}
+          onClear={handleClear}
+          canUndo={paths.length > 0}
+        />
+      </div>
 
       {/* Canvas */}
-      <div className="flex-1 relative overflow-hidden">
+      <div className="flex-1 relative overflow-hidden min-h-0 w-full">
         <canvas
           ref={canvasRef}
           className="absolute inset-0 w-full h-full cursor-crosshair touch-none"
@@ -464,7 +437,10 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave, demo = false, cal
           onMouseUp={handleEnd}
           onMouseLeave={handleEnd}
           onTouchStart={handleStart}
-          onTouchMove={handleMove}
+          onTouchMove={(e) => {
+            e.preventDefault();
+            handleMove(e);
+          }}
           onTouchEnd={handleEnd}
         />
       </div>

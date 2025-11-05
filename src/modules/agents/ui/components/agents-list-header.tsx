@@ -23,12 +23,12 @@ export const AgentsListHeader = () => {
     return(
         <>
         <NewAgentDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
-        <div className="px-4 py-4 md:px-8 flex flex-col gap-y-4">
-            <div className="flex items-center justify-between">
-                <h5 className="font-medium text-xl">My Agents</h5>
-                <Button onClick={() => setIsDialogOpen(true)}>
-                    <PlusIcon />
-                    New Agents
+        <div className="px-2 sm:px-4 py-2 sm:py-4 md:px-8 flex flex-col gap-y-2 sm:gap-y-4 w-full max-w-full overflow-x-hidden">
+            <div className="flex items-center justify-between gap-2">
+                <h5 className="font-medium text-base sm:text-xl">My Agents</h5>
+                <Button onClick={() => setIsDialogOpen(true)} className="touch-target text-sm sm:text-base">
+                    <PlusIcon className="h-4 w-4" />
+                    <span className="hidden sm:inline">New Agents</span>
                 </Button>
             </div>
             <ScrollArea>

@@ -46,10 +46,10 @@ export function WhiteboardToolbar({
   ];
 
   return (
-    <div className="border-b p-4 bg-muted/50">
-      <div className="flex flex-wrap items-center gap-4">
+    <div className="border-b p-2 sm:p-4 bg-muted/50 overflow-x-auto">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4 min-w-max sm:min-w-0">
         {/* Tools */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {tools.map(({ tool, icon, label }) => (
             <Button
               key={tool}
@@ -57,23 +57,24 @@ export function WhiteboardToolbar({
               size="sm"
               onClick={() => onToolChange(tool)}
               title={label}
+              className="min-w-[44px] min-h-[44px] touch-target"
             >
               {icon}
             </Button>
           ))}
         </div>
 
-        <Separator orientation="vertical" className="h-6" />
+        <Separator orientation="vertical" className="h-6 hidden sm:block" />
 
         {/* Color Picker */}
-        <div className="flex items-center gap-2">
-          <Label htmlFor="color-picker" className="text-sm">Color:</Label>
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Label htmlFor="color-picker" className="text-xs sm:text-sm hidden sm:inline">Color:</Label>
           <div className="flex gap-1">
-            {colors.map((color) => (
+            {colors.slice(0, 6).map((color) => (
               <button
                 key={color}
                 onClick={() => onColorChange(color)}
-                className={`w-6 h-6 rounded border-2 ${
+                className={`w-6 h-6 sm:w-6 sm:h-6 rounded border-2 touch-target ${
                   currentColor === color ? 'border-primary' : 'border-transparent'
                 }`}
                 style={{ backgroundColor: color }}
@@ -86,15 +87,15 @@ export function WhiteboardToolbar({
             type="color"
             value={currentColor}
             onChange={(e) => onColorChange(e.target.value)}
-            className="w-10 h-8 p-0 border-0"
+            className="w-8 h-8 sm:w-10 sm:h-8 p-0 border-0 touch-target"
           />
         </div>
 
-        <Separator orientation="vertical" className="h-6" />
+        <Separator orientation="vertical" className="h-6 hidden sm:block" />
 
         {/* Line Width */}
-        <div className="flex items-center gap-2">
-          <Label htmlFor="line-width" className="text-sm">Width:</Label>
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Label htmlFor="line-width" className="text-xs sm:text-sm hidden sm:inline">Width:</Label>
           <Input
             id="line-width"
             type="range"
@@ -102,21 +103,22 @@ export function WhiteboardToolbar({
             max="10"
             value={lineWidth}
             onChange={(e) => onWidthChange(Number(e.target.value))}
-            className="w-24"
+            className="w-16 sm:w-24 touch-target"
           />
-          <span className="text-sm text-muted-foreground w-8">{lineWidth}px</span>
+          <span className="text-xs sm:text-sm text-muted-foreground w-6 sm:w-8">{lineWidth}px</span>
         </div>
 
-        <Separator orientation="vertical" className="h-6" />
+        <Separator orientation="vertical" className="h-6 hidden sm:block" />
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={onUndo}
             disabled={!canUndo}
             title="Undo"
+            className="min-w-[44px] min-h-[44px] touch-target"
           >
             <Undo2 className="h-4 w-4" />
           </Button>
@@ -125,6 +127,7 @@ export function WhiteboardToolbar({
             size="sm"
             onClick={onClear}
             title="Clear"
+            className="min-w-[44px] min-h-[44px] touch-target"
           >
             <Trash2 className="h-4 w-4" />
           </Button>

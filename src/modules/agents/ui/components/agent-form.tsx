@@ -126,7 +126,7 @@ export const AgentForm = ({
   return (
     <Form {...form}>
       <form
-        className="space-y-4 max-h-[90dvh] overflow-y-auto"
+        className="space-y-4 max-h-[90dvh] overflow-y-auto w-full"
         onSubmit={form.handleSubmit(onSubmit)}
       >
         {isRefetchingAfterCreate ? (

@@ -42,11 +42,11 @@ const Page = async({searchParams}: Props) => {
     return (
         <>
         <AgentsListHeader />
-        <div className="px-4 md:px-8 pb-4">
-            <Tabs defaultValue="my-agents" className="w-full">
-                <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
-                    <TabsTrigger value="my-agents">My Agents</TabsTrigger>
-                    <TabsTrigger value="catalog">Agent Catalog</TabsTrigger>
+        <div className="px-2 sm:px-4 md:px-8 pb-4 w-full max-w-full overflow-x-hidden">
+            <Tabs defaultValue="my-agents" className="w-full max-w-full">
+                <TabsList className="grid w-full max-w-full sm:max-w-md grid-cols-2 mb-4 sm:mb-6">
+                    <TabsTrigger value="my-agents" className="text-sm sm:text-base touch-target">My Agents</TabsTrigger>
+                    <TabsTrigger value="catalog" className="text-sm sm:text-base touch-target">Agent Catalog</TabsTrigger>
                 </TabsList>
                 <TabsContent value="my-agents">
                     <HydrationBoundary state={dehydrate(queryClient)}>
