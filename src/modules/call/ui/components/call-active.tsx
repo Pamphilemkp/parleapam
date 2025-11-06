@@ -6,7 +6,8 @@ import { CallControls, SpeakerLayout, useCall, useCallStateHooks } from '@stream
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { WhiteboardCanvas } from './whiteboard/whiteboard-canvas';
-import { AvatarAnimated } from './avatar/avatar-animated';
+import { AvatarRealistic } from './avatar/avatar-realistic';
+import { useAITranscript } from '@/hooks/use-ai-transcript';
 import { usePremium } from '@/hooks/use-premium';
 import { PenTool, Sparkles, X } from 'lucide-react';
 import { trpc } from '@/trpc/client';
@@ -27,6 +28,42 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
     const saveWhiteboard = trpc.meetings.updateWhiteboard.useMutation();
     const [isAIDemoActive, setIsAIDemoActive] = useState(false);
     const [isAgentSpeaking, setIsAgentSpeaking] = useState(false);
+    const [avatarExpression, setAvatarExpression] = useState<'neutral' | 'smile' | 'laugh' | 'talk' | 'explain'>('neutral');
+
+    // Listen for AI transcriptions and detect teaching commands
+    useAITranscript({
+        call,
+        agentId,
+        onTranscript: (text) => {
+            // Update avatar expression based on transcript content
+            const lowerText = text.toLowerCase();
+            if (lowerText.includes('laugh') || lowerText.includes('haha') || lowerText.includes('funny')) {
+                setAvatarExpression('laugh');
+            } else if (lowerText.includes('explain') || lowerText.includes('demonstrate') || lowerText.includes('show')) {
+                setAvatarExpression('explain');
+            } else if (lowerText.includes(':)') || lowerText.includes('smile')) {
+                setAvatarExpression('smile');
+            } else if (isAgentSpeaking) {
+                setAvatarExpression('talk');
+            } else {
+                setAvatarExpression('neutral');
+            }
+        },
+        onTeachingCommand: (command) => {
+            // Automatically open whiteboard when AI wants to demonstrate/teach
+            if (isPremium && !showWhiteboard) {
+                setShowWhiteboard(true);
+                
+                // Trigger whiteboard command after a short delay
+                window.setTimeout(() => {
+                    const event = new CustomEvent('ai-whiteboard-command', {
+                        detail: { command }
+                    });
+                    window.dispatchEvent(event);
+                }, 500);
+            }
+        }
+    });
 
     // Detect when AI agent is speaking (audio level detection)
     useEffect(() => {
@@ -128,14 +165,17 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
                 <div className="w-full h-full">
                     <SpeakerLayout />
                 </div>
-                {/* Avatar Animation Overlay (Premium only) */}
+                {/* Realistic Avatar Overlay (Premium only) - replaces video feed */}
                 {isPremium && agentId && (
-                    <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10">
-                        <AvatarAnimated
-                            name="AI Agent"
-                            isPremium={isPremium}
-                            isSpeaking={isAgentSpeaking || isAIDemoActive}
-                        />
+                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none bg-gradient-to-br from-black/20 to-transparent">
+                        <div className="relative">
+                            <AvatarRealistic
+                                name="AI Teacher"
+                                isPremium={isPremium}
+                                isSpeaking={isAgentSpeaking || isAIDemoActive}
+                                expression={avatarExpression}
+                            />
+                        </div>
                     </div>
                 )}
             </div>

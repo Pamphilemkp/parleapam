@@ -176,6 +176,105 @@ export function WhiteboardCanvas({ meetingId, onClose, onSave, demo = false, cal
       setPaths(prev => [...prev, box1, arrow1, box2]);
       return;
     }
+    
+    // Teaching commands - formulas, equations, demonstrations
+    if (cmd.includes('formula') || cmd.includes('equation') || cmd.includes('demonstrate') || 
+        cmd.includes('show') || cmd.includes('explain visually') || cmd.includes('physical example')) {
+      // Extract formula/equation from command if mentioned
+      const formulaMatch = cmd.match(/(?:formula|equation|demonstrate|show|explain)\s+(.+?)(?:\s|$)/);
+      const content = formulaMatch?.[1] || 'Formula';
+      
+      // Draw a formula box with text
+      const formulaBox: WhiteboardState['paths'][number] = {
+        tool: 'rectangle',
+        points: [
+          { x: centerX - 120, y: centerY - 40 },
+          { x: centerX + 120, y: centerY + 40 }
+        ],
+        color: '#0ea5e9',
+        width: 3,
+      };
+      const formulaText: WhiteboardState['paths'][number] = {
+        tool: 'text',
+        points: [{ x: centerX - 100, y: centerY }],
+        color: '#1e40af',
+        width: 4,
+        text: content.substring(0, 40),
+      };
+      setPaths(prev => [...prev, formulaBox, formulaText]);
+      return;
+    }
+    
+    // Mathematical/chemical demonstrations
+    if (cmd.includes('mathematical') || cmd.includes('chemical') || cmd.includes('calculate') || 
+        cmd.includes('principle') || cmd.includes('movement')) {
+      // Draw a demonstration diagram
+      const demoTitle: WhiteboardState['paths'][number] = {
+        tool: 'text',
+        points: [{ x: centerX - 100, y: centerY - 80 }],
+        color: '#0ea5e9',
+        width: 4,
+        text: 'Demonstration',
+      };
+      const demoCircle: WhiteboardState['paths'][number] = {
+        tool: 'circle',
+        points: [
+          { x: centerX - 60, y: centerY },
+          { x: centerX + 60, y: centerY }
+        ],
+        color: '#10b981',
+        width: 3,
+      };
+      const demoArrow: WhiteboardState['paths'][number] = {
+        tool: 'arrow',
+        points: [
+          { x: centerX, y: centerY - 30 },
+          { x: centerX, y: centerY + 30 }
+        ],
+        color: '#ef4444',
+        width: 3,
+      };
+      setPaths(prev => [...prev, demoTitle, demoCircle, demoArrow]);
+      return;
+    }
+    
+    // Graph/chart commands
+    if (cmd.includes('graph') || cmd.includes('chart') || cmd.includes('plot')) {
+      // Draw axes and a simple graph
+      const xAxis: WhiteboardState['paths'][number] = {
+        tool: 'line',
+        points: [
+          { x: centerX - 150, y: centerY },
+          { x: centerX + 150, y: centerY }
+        ],
+        color: '#000000',
+        width: 2,
+      };
+      const yAxis: WhiteboardState['paths'][number] = {
+        tool: 'line',
+        points: [
+          { x: centerX, y: centerY - 100 },
+          { x: centerX, y: centerY + 100 }
+        ],
+        color: '#000000',
+        width: 2,
+      };
+      // Draw a simple curve
+      const curvePoints: Array<{ x: number; y: number }> = [];
+      for (let i = -100; i <= 100; i += 10) {
+        const x = centerX + i;
+        const y = centerY - Math.sin(i / 30) * 50;
+        curvePoints.push({ x, y });
+      }
+      const curve: WhiteboardState['paths'][number] = {
+        tool: 'pen',
+        points: curvePoints,
+        color: '#0ea5e9',
+        width: 3,
+      };
+      setPaths(prev => [...prev, xAxis, yAxis, curve]);
+      return;
+    }
   }, [isPremium, currentColor, lineWidth]);
   
   // Listen for AI commands via window events

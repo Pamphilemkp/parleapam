@@ -114,9 +114,36 @@ export async function POST(req: Request) {
 
         });
 
+        // Enhanced instructions for teaching with whiteboard integration
+        const enhancedInstructions = `${existingAgent.instructions}
+
+IMPORTANT: You have access to an interactive whiteboard during this meeting. When teaching, explaining concepts, demonstrating formulas, or showing visual examples, you should:
+1. Explicitly mention when you want to use the whiteboard (e.g., "Let me demonstrate this on the whiteboard", "I'll draw this formula", "Let me show you visually")
+2. Use phrases like "demonstrate", "show on the whiteboard", "draw", "explain visually", "illustrate", "formula", "diagram", "graph" when you want to use the whiteboard
+3. Be proactive in using the whiteboard for:
+   - Mathematical formulas and equations
+   - Chemical formulas and reactions
+   - Diagrams and flowcharts
+   - Graphs and charts
+   - Step-by-step visual explanations
+   - Physical principles and demonstrations
+
+When you want to use the whiteboard, say phrases like:
+- "Let me demonstrate this on the whiteboard"
+- "I'll draw the formula for you"
+- "Let me show you visually"
+- "I'll create a diagram to explain"
+- "Let me plot this on a graph"
+
+The whiteboard will automatically open when you mention these teaching keywords.`;
+
         realtimeClient.updateSession({
-            instructions: existingAgent.instructions,
+            instructions: enhancedInstructions,
         });
+        
+        // Listen to OpenAI Realtime events for transcriptions
+        // Note: Stream's OpenAI integration handles this internally, but we can add custom handlers
+        // For now, transcriptions will be available via Stream's transcript API after the call
 
     } else if (eventType === "call.session_participant_left") {
         const event = payload as unknown as CallSessionParticipantLeftEvent;
