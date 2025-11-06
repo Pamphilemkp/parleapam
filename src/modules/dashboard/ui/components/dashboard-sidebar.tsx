@@ -65,7 +65,7 @@ const pathname = usePathname();
                                     pathname === item.href ? "bg-linear-to-r/oklch border-sidebar-[5D6B68]/10" : "bg-transparent")}
                                     isActive={pathname === item.href}>
                                     <Link href={item.href} className="flex items-center gap-2">
-                                        <item.icon className="h-5 w-5" />
+                                        <item.icon className="h-5 w-5 opacity-100 flex-shrink-0 !visible !block" style={{ display: 'block !important' }} />
                                         <span className="text-sm tracking-tight">{item.label}</span>
                                     </Link>
                                 </SidebarMenuButton>
@@ -87,7 +87,7 @@ const pathname = usePathname();
                                     pathname === item.href ? "bg-linear-to-r/oklch border-sidebar-[5D6B68]/10" : "bg-transparent")}
                                     isActive={pathname === item.href}>
                                     <Link href={item.href} className="flex items-center gap-2">
-                                        <item.icon className="h-5 w-5" />
+                                        <item.icon className="h-5 w-5 opacity-100 flex-shrink-0 !visible !block" style={{ display: 'block !important' }} />
                                         <span className="text-sm tracking-tight">{item.label}</span>
                                     </Link>
                                 </SidebarMenuButton>
