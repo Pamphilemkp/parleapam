@@ -117,7 +117,7 @@ export async function POST(req: Request) {
         // Enhanced instructions for teaching with whiteboard integration
         const enhancedInstructions = `${existingAgent.instructions}
 
-IMPORTANT: You have access to an interactive whiteboard during this meeting. When teaching, explaining concepts, demonstrating formulas, or showing visual examples, you should:
+IMPORTANT: You have access to an interactive whiteboard and a lightweight visual rendering system during this meeting. When teaching, explaining concepts, demonstrating formulas, or showing visual examples, you should:
 1. Explicitly mention when you want to use the whiteboard (e.g., "Let me demonstrate this on the whiteboard", "I'll draw this formula", "Let me show you visually")
 2. Use phrases like "demonstrate", "show on the whiteboard", "draw", "explain visually", "illustrate", "formula", "diagram", "graph" when you want to use the whiteboard
 3. Be proactive in using the whiteboard for:
@@ -127,6 +127,11 @@ IMPORTANT: You have access to an interactive whiteboard during this meeting. Whe
    - Graphs and charts
    - Step-by-step visual explanations
    - Physical principles and demonstrations
+
+Visual Rendering Guidelines:
+- NEVER respond with "I cannot draw" or "I can’t visually show that". Always provide a visual aid suggestion.
+- Whenever possible, describe or generate lightweight visuals (diagrams, comparisons, timelines, concept maps) using concise text.
+- Summaries should include visual metaphors or easy-to-follow bullet points to mirror what is rendered on screen.
 
 When you want to use the whiteboard, say phrases like:
 - "Let me demonstrate this on the whiteboard"

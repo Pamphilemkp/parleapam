@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { WhiteboardCanvas } from './whiteboard/whiteboard-canvas';
 import { AvatarRealistic } from './avatar/avatar-realistic';
 import { useAITranscript } from '@/hooks/use-ai-transcript';
+import { VisualExplanationPanel } from './visual-explanation-panel';
+import type { VisualExplanationData } from '@/modules/call/lib/visual-explanation';
 import { usePremium } from '@/hooks/use-premium';
 import { PenTool, Sparkles, X } from 'lucide-react';
 import { trpc } from '@/trpc/client';
@@ -29,6 +31,13 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
     const [isAIDemoActive, setIsAIDemoActive] = useState(false);
     const [isAgentSpeaking, setIsAgentSpeaking] = useState(false);
     const [avatarExpression, setAvatarExpression] = useState<'neutral' | 'smile' | 'laugh' | 'talk' | 'explain'>('neutral');
+    const [visualExplanation, setVisualExplanation] = useState<VisualExplanationData | null>(null);
+
+    useEffect(() => {
+        if (!visualExplanation) return;
+        const timeout = window.setTimeout(() => setVisualExplanation(null), 20000);
+        return () => window.clearTimeout(timeout);
+    }, [visualExplanation]);
 
     // Listen for AI transcriptions and detect teaching commands
     useAITranscript({
@@ -61,6 +70,16 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
                     });
                     window.dispatchEvent(event);
                 }, 500);
+            }
+        },
+        onVisual: (visual) => {
+            setVisualExplanation(visual);
+
+            if (isPremium && !showWhiteboard) {
+                const shouldOpenWhiteboard = ['flowchart', 'equation'].includes(visual.type);
+                if (shouldOpenWhiteboard) {
+                    setShowWhiteboard(true);
+                }
             }
         }
     });
@@ -165,16 +184,21 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
                 <div className="w-full h-full">
                     <SpeakerLayout />
                 </div>
-                {/* Realistic Avatar Overlay (Premium only) - replaces video feed */}
+                {/* Realistic Avatar Overlay (Premium only) - positioned in bottom-right corner to not hide user */}
                 {isPremium && agentId && (
-                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none bg-gradient-to-br from-black/20 to-transparent">
-                        <div className="relative">
+                    <div className="absolute bottom-16 sm:bottom-20 right-2 sm:right-4 z-10 pointer-events-none">
+                        <div className="relative bg-black/30 backdrop-blur-sm rounded-full p-2 sm:p-3 border-2 border-primary/30 shadow-2xl">
                             <AvatarRealistic
                                 name="AI Teacher"
                                 isPremium={isPremium}
                                 isSpeaking={isAgentSpeaking || isAIDemoActive}
                                 expression={avatarExpression}
+                                className="w-24 h-24 sm:w-32 sm:h-32"
                             />
+                            {/* Speaking indicator */}
+                            {isAgentSpeaking && (
+                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-ping border-2 border-white" />
+                            )}
                         </div>
                     </div>
                 )}
@@ -216,6 +240,11 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
                     </div>
                 </div>
             )}
+
+            <VisualExplanationPanel
+                data={visualExplanation}
+                onClose={() => setVisualExplanation(null)}
+            />
 
             {/* Premium Feature Indicator */}
             {!isPremium && (

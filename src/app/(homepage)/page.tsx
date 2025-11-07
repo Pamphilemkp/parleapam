@@ -1,4 +1,4 @@
-import ModernHomeView from "@/modules/home/ui/views/modern-home-view";
+import MagicHomeView from "@/modules/home/ui/views/magic-home-view";
 import { GetStarted } from "@/modules/home/ui/components/get-started";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -12,7 +12,7 @@ const Page = async () => {
     return <GetStarted />;
   }
 
-  return <ModernHomeView />;
+  return <MagicHomeView />;
 }
 
 export default Page;
