@@ -2,22 +2,25 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { Call } from '@stream-io/video-react-sdk';
+import { deriveVisualExplanation, type VisualExplanationData } from '@/modules/call/lib/visual-explanation';
 
 interface UseAITranscriptOptions {
   call?: Call;
   agentId?: string;
   onTranscript?: (text: string) => void;
   onTeachingCommand?: (command: string) => void;
+  onVisual?: (visual: VisualExplanationData) => void;
 }
 
 /**
  * Hook to listen for AI agent transcriptions and detect teaching/demonstration commands
  */
-export function useAITranscript({ 
-  call, 
-  agentId, 
+export function useAITranscript({
+  call,
+  agentId,
   onTranscript,
-  onTeachingCommand 
+  onTeachingCommand,
+  onVisual,
 }: UseAITranscriptOptions) {
   const [lastTranscript, setLastTranscript] = useState<string>('');
   const transcriptBufferRef = useRef<string[]>([]);
@@ -68,14 +71,24 @@ export function useAITranscript({
           .join(' ');
         
         if (transcript && transcript.trim().length > 0) {
-          // Check if user is asking for demonstration
           const lowerText = transcript.toLowerCase();
-          if (lowerText.includes('demonstrate') || lowerText.includes('show me') || 
-              lowerText.includes('explain') || lowerText.includes('draw') ||
-              lowerText.includes('formula') || lowerText.includes('diagram')) {
-            // Trigger whiteboard command
+          if (
+            lowerText.includes('demonstrate') ||
+            lowerText.includes('show me') ||
+            lowerText.includes('explain') ||
+            lowerText.includes('draw') ||
+            lowerText.includes('formula') ||
+            lowerText.includes('diagram')
+          ) {
             if (onTeachingCommand) {
               onTeachingCommand(transcript);
+            }
+          }
+
+          if (onVisual) {
+            const visual = deriveVisualExplanation(transcript);
+            if (visual) {
+              onVisual(visual);
             }
           }
         }
@@ -123,6 +136,13 @@ export function useAITranscript({
 
           // Check for teaching commands
           checkForTeachingCommands(newText);
+
+          if (onVisual) {
+            const visual = deriveVisualExplanation(newText);
+            if (visual) {
+              onVisual(visual);
+            }
+          }
         }
       }
     };
@@ -139,7 +159,7 @@ export function useAITranscript({
         }
       }
     };
-  }, [call, agentId, lastTranscript, onTranscript, onTeachingCommand]);
+  }, [call, agentId, lastTranscript, onTranscript, onTeachingCommand, onVisual]);
 
   return {
     lastTranscript,

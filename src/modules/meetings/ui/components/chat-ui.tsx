@@ -19,9 +19,10 @@ interface ChatUIProps {
     userId: string;
     userName: string;
     userImage: string | undefined;
+    agentId?: string;
 }
 
-export const ChatUI = ({ meetingId, meetingName, userId, userName, userImage }: ChatUIProps) => {
+export const ChatUI = ({ meetingId, meetingName, userId, userName, userImage, agentId }: ChatUIProps) => {
 
    const { mutateAsync: generateChatToken } = trpc.meetings.generateChatToken.useMutation();
 
@@ -40,12 +41,36 @@ export const ChatUI = ({ meetingId, meetingName, userId, userName, userImage }: 
     useEffect(() => {
         if (!client) return;
 
-        const channel = client.channel("messaging", meetingId, {
+        const channelInstance = client.channel("messaging", meetingId, {
             members: [userId],
         });
 
-        setChannel(channel);
+        setChannel(channelInstance);
     }, [client, meetingId, meetingName, userId]);
+
+    useEffect(() => {
+        if (!channel || !agentId) return;
+
+        const handleNewMessage = (event: { message?: { text?: string | null; user?: { id?: string | null } | null } }) => {
+            const message = event.message;
+            if (!message?.text || !message.user?.id) return;
+            if (message.user.id !== agentId) return;
+
+            window.dispatchEvent(
+                new CustomEvent('ai-transcript', {
+                    detail: {
+                        text: message.text,
+                        userId: message.user.id ?? undefined,
+                    },
+                }),
+            );
+        };
+
+        channel.on('message.new', handleNewMessage);
+        return () => {
+            channel.off('message.new', handleNewMessage);
+        };
+    }, [channel, agentId]);
 
     if(!client) {
         return <LoadingState

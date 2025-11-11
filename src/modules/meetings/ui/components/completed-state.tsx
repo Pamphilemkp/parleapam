@@ -61,7 +61,7 @@ export const CompletedState = ({ data }: Props) => {
                         </TabsTrigger>
                     </TabsList>
                     <TabsContent value="chat">
-                            <ChatProvider meetingId={data.id} meetingName={data.name} />
+                            <ChatProvider meetingId={data.id} meetingName={data.name} agentId={data.agentId ?? undefined} />
                     </TabsContent>
                     <TabsContent value="transcript">
                             <Transcript meetingId={data.id} />

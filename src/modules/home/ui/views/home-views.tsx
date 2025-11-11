@@ -8,7 +8,6 @@ import VideoSection from '../components/video-section';
 
 export default function HomeViews() {
   const [isDark, setIsDark] = useState(false);
-  const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   useEffect(() => {
     const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -77,18 +76,14 @@ export default function HomeViews() {
             initial="initial"
             whileHover={{ scale: 1.05 }}
           >
-            {!isImageLoaded && (
-              <div className="w-full aspect-video bg-gray-200 rounded-lg animate-pulse" />
-            )}
             <Image
               src="/ai-video-call-fallback.png"
               alt="Human interacting with AI in a video call on Parle à Pam AI"
               width={1280}
               height={720}
-              className={`w-full rounded-lg shadow-2xl border border-border ${isImageLoaded ? 'block' : 'hidden'}`}
+              className="w-full rounded-lg shadow-2xl border border-border"
               style={{ transformStyle: 'preserve-3d' }}
               unoptimized
-              onLoadingComplete={() => setIsImageLoaded(true)}
               priority
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent rounded-lg pointer-events-none" />

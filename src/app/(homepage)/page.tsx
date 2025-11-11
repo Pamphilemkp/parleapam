@@ -1,18 +1,7 @@
-import ModernHomeView from "@/modules/home/ui/views/modern-home-view";
-import { GetStarted } from "@/modules/home/ui/components/get-started";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import MagicHomeView from "@/modules/home/ui/views/magic-home-view";
 
-const Page = async () => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (session) {
-    return <GetStarted />;
-  }
-
-  return <ModernHomeView />;
-}
+const Page = () => {
+  return <MagicHomeView />;
+};
 
 export default Page;

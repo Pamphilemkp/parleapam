@@ -2,12 +2,14 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { CallControls, SpeakerLayout, useCall, useCallStateHooks } from '@stream-io/video-react-sdk';
+import { CallControls, ParticipantView, SpeakerLayout, useCall, useCallStateHooks } from '@stream-io/video-react-sdk';
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { WhiteboardCanvas } from './whiteboard/whiteboard-canvas';
 import { AvatarRealistic } from './avatar/avatar-realistic';
 import { useAITranscript } from '@/hooks/use-ai-transcript';
+import { VisualExplanationPanel } from './visual-explanation-panel';
+import type { VisualExplanationData } from '@/modules/call/lib/visual-explanation';
 import { usePremium } from '@/hooks/use-premium';
 import { PenTool, Sparkles, X } from 'lucide-react';
 import { trpc } from '@/trpc/client';
@@ -21,19 +23,48 @@ interface Props {
 
 export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) => {
     const call = useCall();
-    const { useParticipants } = useCallStateHooks();
+    const { useParticipants, useLocalParticipant } = useCallStateHooks();
     const participants = useParticipants();
-    const [showWhiteboard, setShowWhiteboard] = useState(false);
+    const localParticipant = useLocalParticipant();
+    const remoteParticipants = participants.filter(
+        (participant) => participant.sessionId !== localParticipant?.sessionId
+    );
     const { isPremium } = usePremium();
+    const normalizedAgentId = agentId?.toLowerCase();
+    const agentParticipant = remoteParticipants.find((participant) => {
+        const userId = participant.userId?.toLowerCase();
+        if (!userId) {
+            return false;
+        }
+
+        if (normalizedAgentId) {
+            if (userId === normalizedAgentId) {
+                return true;
+            }
+        }
+
+        return userId.includes('agent');
+    });
+    const shouldShowParticipantsBar = remoteParticipants.length > 1;
+    const effectiveAgentId = agentParticipant?.userId ?? agentId;
+    const hasInteractiveAgent = Boolean(isPremium && effectiveAgentId);
+    const [showWhiteboard, setShowWhiteboard] = useState(false);
     const saveWhiteboard = trpc.meetings.updateWhiteboard.useMutation();
     const [isAIDemoActive, setIsAIDemoActive] = useState(false);
     const [isAgentSpeaking, setIsAgentSpeaking] = useState(false);
     const [avatarExpression, setAvatarExpression] = useState<'neutral' | 'smile' | 'laugh' | 'talk' | 'explain'>('neutral');
+    const [visualExplanation, setVisualExplanation] = useState<VisualExplanationData | null>(null);
+
+    useEffect(() => {
+        if (!visualExplanation) return;
+        const timeout = window.setTimeout(() => setVisualExplanation(null), 20000);
+        return () => window.clearTimeout(timeout);
+    }, [visualExplanation]);
 
     // Listen for AI transcriptions and detect teaching commands
     useAITranscript({
         call,
-        agentId,
+        agentId: effectiveAgentId,
         onTranscript: (text) => {
             // Update avatar expression based on transcript content
             const lowerText = text.toLowerCase();
@@ -62,27 +93,23 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
                     window.dispatchEvent(event);
                 }, 500);
             }
+        },
+        onVisual: (visual) => {
+            setVisualExplanation(visual);
+
+            if (isPremium && !showWhiteboard) {
+                const shouldOpenWhiteboard = ['flowchart', 'equation'].includes(visual.type);
+                if (shouldOpenWhiteboard) {
+                    setShowWhiteboard(true);
+                }
+            }
         }
     });
 
     // Detect when AI agent is speaking (audio level detection)
     useEffect(() => {
-        if (!call || !agentId || !participants) return;
-
-        const agentParticipant = participants.find(p => p.userId === agentId || p.userId?.includes('agent'));
-        
-        if (!agentParticipant) return;
-
-        // Monitor audio level to detect speech
-        const checkAudio = () => {
-            // Check if participant has audio track and is currently speaking
-            const hasAudio = agentParticipant.isSpeaking || false;
-            setIsAgentSpeaking(hasAudio);
-        };
-
-        const interval = setInterval(checkAudio, 100);
-        return () => clearInterval(interval);
-    }, [call, participants, agentId]);
+        setIsAgentSpeaking(Boolean(agentParticipant?.isSpeaking));
+    }, [agentParticipant]);
 
     const handleSaveWhiteboard = (data: unknown) => {
         saveWhiteboard.mutate({
@@ -128,21 +155,24 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
     };
 
     return (
-        <div className="flex flex-col justify-between h-screen-mobile p-2 sm:p-4 text-white relative overflow-hidden w-full max-w-full">
+        <div className="flex h-screen-mobile w-full max-w-full flex-col gap-3 overflow-hidden bg-[#050505] p-2 text-white sm:p-4">
             {/* Header - Responsive */}
-            <div className="bg-[#101213] rounded-full flex items-center gap-2 sm:gap-4 px-2 sm:px-4 py-2 sticky top-0 sm:top-[env(safe-area-inset-top)] z-20 w-full max-w-full flex-shrink-0">
-               <Link href="/" className="flex items-center justify-center p-1 bg-white/10 rounded-full w-fit min-w-[44px] min-h-[44px]">
+            <div className="sticky top-0 z-20 flex w-full max-w-full flex-shrink-0 items-center gap-2 rounded-full bg-[#101213] px-2 py-2 sm:top-[env(safe-area-inset-top)] sm:gap-4 sm:px-4">
+                <Link
+                    href="/"
+                    className="flex min-h-[44px] min-w-[44px] w-fit items-center justify-center rounded-full bg-white/10 p-1"
+                >
                    <Image src="/logo.svg" alt="Logo" width={22} height={22} className="rounded-full" />
                </Link>
-               <h4 className="text-sm sm:text-base truncate flex-1">{meetingName}</h4>
+                <h4 className="flex-1 truncate text-sm sm:text-base">{meetingName}</h4>
                {/* Premium features button */}
                {isPremium && (
                    <Button
                        variant="ghost"
                        size="sm"
                        onClick={() => setShowWhiteboard(!showWhiteboard)}
-                       className="text-white hover:bg-white/20 min-w-[44px] min-h-[44px]"
-                       title={showWhiteboard ? "Close Whiteboard" : "Open Whiteboard"}
+                        className="min-h-[44px] min-w-[44px] text-white hover:bg-white/20"
+                        title={showWhiteboard ? 'Close Whiteboard' : 'Open Whiteboard'}
                    >
                        {showWhiteboard ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <PenTool className="h-4 w-4 sm:h-5 sm:w-5" />}
                    </Button>
@@ -152,7 +182,7 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
                        variant="secondary"
                        size="sm"
                        onClick={triggerAIDemo}
-                       className="min-w-[44px] min-h-[44px]"
+                        className="min-h-[44px] min-w-[44px]"
                        title="AI Demonstration"
                    >
                        <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -160,28 +190,136 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
                )}
             </div>
 
-            {/* Speaker Layout with Avatar */}
-            <div className="flex-1 relative min-h-0 w-full max-w-full overflow-hidden">
-                <div className="w-full h-full">
-                    <SpeakerLayout />
+            {/* Speaker Layout with dedicated agent area */}
+            <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+                <div className="relative flex-1">
+                    <div
+                        className="grid h-full gap-3 lg:grid-cols-[minmax(0,1fr)_320px]"
+                        data-testid="call-layout-grid"
+                    >
+                        <div
+                            className="relative h-full overflow-hidden rounded-3xl border border-white/10 bg-black/60 shadow-2xl
+                                       [&_.str-video__speaker-layout]:h-full
+                                       [&_.str-video__speaker-layout]:w-full
+                                       [&_.str-video__speaker-layout__wrapper]:h-full
+                                       [&_.str-video__speaker-layout__spotlight]:h-full
+                                       [&_.str-video__speaker-layout__spotlight]:w-full
+                                       [&_.str-video__participant-view]:!h-full
+                                       [&_.str-video__participant-view]:!w-full
+                                       [&_.str-video__participant-view__video]:!h-full
+                                       [&_.str-video__participant-view__video]:!w-full
+                                       [&_.str-video__participant-view__video]:!object-contain
+                                       [&_.str-video__participant-view__video]:sm:!object-cover"
+                        >
+                            <SpeakerLayout
+                                participantsBarPosition={shouldShowParticipantsBar ? 'bottom' : null}
+                                participantsBarLimit="dynamic"
+                                excludeLocalParticipant
+                            />
+
+                            {localParticipant && (
+                                <div className="absolute left-3 top-3 w-28 overflow-hidden rounded-2xl border border-white/20 bg-black/70 shadow-lg backdrop-blur-sm sm:w-40">
+                                    <div className="relative h-full w-full">
+                                        <ParticipantView
+                                            participant={localParticipant}
+                                            mirror
+                                            className="!h-full !w-full [&_.str-video__participant-view__video]:!h-full [&_.str-video__participant-view__video]:!w-full [&_.str-video__participant-view__video]:!object-cover"
+                                        />
+                                        <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-xs font-medium">
+                                            You
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="hidden h-full flex-col rounded-3xl border border-white/10 bg-black/50 p-4 shadow-2xl lg:flex">
+                            {hasInteractiveAgent ? (
+                                <>
+                                    <div className="flex items-center justify-between pb-3">
+                                        <span className="text-xs font-semibold uppercase tracking-wide text-primary/70">
+                                            Interactive Agent
+                                        </span>
+                                        {isAgentSpeaking && (
+                                            <span className="flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-1 text-[11px] font-semibold text-emerald-200">
+                                                <span className="inline-block h-2 w-2 animate-ping rounded-full bg-emerald-400" />
+                                                Speaking
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-1 items-center justify-center">
+                                        <AvatarRealistic
+                                            name={agentParticipant?.name ?? 'AI Teacher'}
+                                            isPremium={isPremium}
+                                            isSpeaking={isAgentSpeaking || isAIDemoActive}
+                                            expression={avatarExpression}
+                                            className="w-full max-w-[220px]"
+                                        />
+                                    </div>
+                                    <p className="mt-3 text-xs text-white/60">
+                                        Gestures stay visible here so your view of the call stays clear on every device.
+                                    </p>
+                                </>
+                            ) : (
+                                <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-white/70">
+                                    <Sparkles className="h-6 w-6 text-primary" />
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-semibold">Interactive avatar reserved</p>
+                                        <p className="text-xs text-white/60">
+                                            Upgrade to Premium to replace the static assistant with a live, gesturing AI.
+                                        </p>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => window.open('/upgrade', '_blank')}
+                                        variant="default"
+                                    >
+                                        Upgrade Now
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
-                {/* Realistic Avatar Overlay (Premium only) - replaces video feed */}
-                {isPremium && agentId && (
-                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none bg-gradient-to-br from-black/20 to-transparent">
-                        <div className="relative">
+
+                {hasInteractiveAgent ? (
+                    <div className="flex items-center gap-3 rounded-3xl border border-white/10 bg-black/50 p-3 shadow-lg lg:hidden">
+                        <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-black/70">
                             <AvatarRealistic
-                                name="AI Teacher"
+                                name={agentParticipant?.name ?? 'AI Teacher'}
                                 isPremium={isPremium}
                                 isSpeaking={isAgentSpeaking || isAIDemoActive}
                                 expression={avatarExpression}
+                                className="h-20 w-20"
                             />
                         </div>
+                        <div className="flex flex-1 flex-col text-xs text-white/70">
+                            <p className="text-sm font-semibold text-white">Interactive Agent</p>
+                            <p>
+                                The AI avatar now lives here so the call view stays centered. Watch it gesture without hiding
+                                you or the agent.
+                            </p>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-between gap-3 rounded-3xl border border-white/10 bg-black/40 p-3 text-xs text-white/70 lg:hidden">
+                        <div>
+                            <p className="text-sm font-semibold text-white">Premium interactive avatar</p>
+                            <p>Reserve space is ready—upgrade to swap in the live gesturing agent on mobile too.</p>
+                        </div>
+                        <Button
+                            size="sm"
+                            onClick={() => window.open('/upgrade', '_blank')}
+                            variant="default"
+                        >
+                            Upgrade
+                        </Button>
                     </div>
                 )}
             </div>
 
             {/* Controls - Responsive */}
-            <div className="bg-[#101213] rounded-full px-2 sm:px-4 py-2 flex items-center justify-center sticky bottom-0 sm:bottom-[env(safe-area-inset-bottom)] z-20 w-full max-w-full flex-shrink-0">
+            <div className="sticky bottom-0 z-20 flex w-full max-w-full flex-shrink-0 items-center justify-center rounded-full bg-[#101213] px-2 py-2 sm:bottom-[env(safe-area-inset-bottom)] sm:px-4">
                 <CallControls onLeave={onLeave} />
             </div>
 
@@ -211,28 +349,17 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
                             onSave={handleSaveWhiteboard}
                             demo={isAIDemoActive}
                             call={call}
-                            agentId={agentId}
+                            agentId={effectiveAgentId}
                         />
                     </div>
                 </div>
             )}
 
-            {/* Premium Feature Indicator */}
-            {!isPremium && (
-                <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-background/90 backdrop-blur-sm p-3 rounded-lg shadow-lg text-center max-w-sm mx-4">
-                    <p className="text-sm text-foreground mb-2">
-                        <Sparkles className="h-4 w-4 inline mr-1" />
-                        Upgrade to Premium for whiteboard and animated avatars
-                    </p>
-                    <Button 
-                        size="sm" 
-                        onClick={() => window.open('/upgrade', '_blank')}
-                        variant="default"
-                    >
-                        Upgrade Now
-                    </Button>
-                </div>
-            )}
+            <VisualExplanationPanel
+                data={visualExplanation}
+                onClose={() => setVisualExplanation(null)}
+            />
+
         </div>
     );
 };
