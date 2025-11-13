@@ -10,6 +10,23 @@ interface PremiumDemoModalProps {
 }
 
 const DEMO_VIDEO_SRC = '/videos/home-banner-ai.mp4';
+const STORY_POINTS = [
+  {
+    title: 'Pick an Agent',
+    detail: 'Choose a specialist with gestures enabled.',
+    time: '00:05',
+  },
+  {
+    title: 'Live Teaching',
+    detail: 'Watch the avatar guide and draw on the board.',
+    time: '00:27',
+  },
+  {
+    title: 'AI Recap',
+    detail: 'Instant summary, actions, and saved visuals.',
+    time: '00:58',
+  },
+];
 
 export function PremiumDemoModal({ triggerClassName }: PremiumDemoModalProps) {
   const [open, setOpen] = useState(false);
@@ -62,6 +79,22 @@ export function PremiumDemoModal({ triggerClassName }: PremiumDemoModalProps) {
               <div className="pointer-events-none absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-xs font-medium text-white">
                 <PlayCircle className="h-3 w-3" />
                 Product walkthrough • 1:12
+              </div>
+              <div className="pointer-events-none absolute inset-x-4 bottom-4 flex flex-col gap-2">
+                {STORY_POINTS.map((point, index) => (
+                  <div
+                    key={point.title}
+                    className="flex items-center justify-between rounded-2xl bg-black/55 px-4 py-2 text-sm text-white backdrop-blur"
+                  >
+                    <div>
+                      <p className="font-semibold">{`${index + 1}. ${point.title}`}</p>
+                      <p className="text-xs text-white/70">{point.detail}</p>
+                    </div>
+                    <span className="rounded-full border border-white/20 px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-white/80">
+                      {point.time}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
 
