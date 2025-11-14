@@ -218,14 +218,14 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
                             />
 
                             {localParticipant && (
-                                <div className="absolute left-3 top-3 w-28 overflow-hidden rounded-2xl border border-white/20 bg-black/70 shadow-lg backdrop-blur-sm sm:w-40">
+                                <div className="absolute left-3 top-3 w-36 overflow-hidden rounded-3xl border border-white/30 bg-black/70 shadow-2xl backdrop-blur-sm sm:left-6 sm:top-6 sm:w-48 md:w-56">
                                     <div className="relative h-full w-full">
                                         <ParticipantView
                                             participant={localParticipant}
                                             mirror
-                                            className="!h-full !w-full [&_.str-video__participant-view__video]:!h-full [&_.str-video__participant-view__video]:!w-full [&_.str-video__participant-view__video]:!object-cover"
+                                            className="!h-full !w-full overflow-hidden rounded-3xl [&_.str-video__participant-view__video]:!h-full [&_.str-video__participant-view__video]:!w-full [&_.str-video__participant-view__video]:!object-cover"
                                         />
-                                        <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-xs font-medium">
+                                        <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-xs font-medium shadow">
                                             You
                                         </div>
                                     </div>
@@ -253,7 +253,7 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
                                             isPremium={isPremium}
                                             isSpeaking={isAgentSpeaking || isAIDemoActive}
                                             expression={avatarExpression}
-                                            className="w-full max-w-[220px]"
+                                            className="w-full max-w-[180px]"
                                         />
                                     </div>
                                     <p className="mt-3 text-xs text-white/60">
@@ -284,13 +284,13 @@ export const CallActive = ({ onLeave, meetingName, meetingId, agentId }: Props) 
 
                 {hasInteractiveAgent ? (
                     <div className="flex items-center gap-3 rounded-3xl border border-white/10 bg-black/50 p-3 shadow-lg lg:hidden">
-                        <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-black/70">
+                        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-black/70 sm:h-20 sm:w-20">
                             <AvatarRealistic
                                 name={agentParticipant?.name ?? 'AI Teacher'}
                                 isPremium={isPremium}
                                 isSpeaking={isAgentSpeaking || isAIDemoActive}
                                 expression={avatarExpression}
-                                className="h-20 w-20"
+                                className="h-16 w-16 sm:h-20 sm:w-20"
                             />
                         </div>
                         <div className="flex flex-1 flex-col text-xs text-white/70">

@@ -6,6 +6,7 @@ import { ArrowRight, Sparkles, Zap, MessageSquare, Video, BarChart3, Brain, Wand
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { PublicAgentCatalog } from '../components/public-agent-catalog';
 import { PremiumDemoModal } from '../components/premium-demo-modal';
+import { PremiumUpsellBanner } from '../components/premium-upsell-banner';
 import { useEffect, useRef, useState } from 'react';
 
 export default function MagicHomeView() {
@@ -182,6 +183,8 @@ export default function MagicHomeView() {
           />
         </div>
       </section>
+
+      <PremiumUpsellBanner />
 
       {/* Features Grid - Enhanced */}
       <section className="py-20 sm:py-32 bg-background/80 backdrop-blur-sm relative">
